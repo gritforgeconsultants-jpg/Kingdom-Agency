@@ -1,7 +1,7 @@
 {
   "name": "Kingdom Agency",
   "short_name": "Kingdom",
-  "description": "Your mission awaits, Agent. A faith-based spy adventure for kids.",
+  "description": "Your mission awaits, Agent. A faith-based spy adventure for kids ages 7-11.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0a1628",
