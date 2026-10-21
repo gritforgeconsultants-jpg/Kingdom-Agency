@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kingdom Agency</title>
+<meta name="description" content="Your mission awaits, Agent. A faith-based spy adventure for kids ages 7-11.">
+<meta name="theme-color" content="#0a1628">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kingdom Agency">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-192.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Nunito:wght@400;600;700;800&family=Share+Tech+Mono&display=swap">
+<style>
+:root {
+  --navy: #0a1628;
+  --navy-light: #132240;
+  --navy-mid: #1a2d4d;
+  --navy-surface: #162035;
+  --gold: #d4a843;
+  --gold-light: #f0d68a;
+  --gold-dim: #8b7230;
+  --gold-glow: rgba(212, 168, 67, 0.15);
+  --white: #f5f5f5;
+  --white-dim: rgba(245, 245, 245, 0.6);
+  --red: #c0392b;
+  --green: #27ae60;
+  --blue: #2980b9;
+  --bronze: #cd7f32;
+  --silver: #a8b2c1;
+  --platinum: #e5e4e2;
+  --bg: var(--navy);
+  --surface: var(--navy-light);
+  --surface-raised: var(--navy-mid);
+  --text: var(--white);
+  --text-dim: var(--white-dim);
+  --accent: var(--gold);
+  --accent-light: var(--gold-light);
+  --accent-dim: var(--gold-dim);
+  --font-display: 'Black Ops One', cursive;
+  --font-body: 'Nunito', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+.screen {
+  display: none;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  padding-block: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rankUp {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15); }
+  50% { transform: scale(0.95); }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes badgeGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(212, 168, 67, 0.5); }
+}
+
+/* Landing Screen */
+.landing { justify-content: center; text-align: center; }
+
+.badge-glow {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: pulse 3s ease-in-out infinite;
+}
+.badge-glow .shield { font-size: 4rem; filter: drop-shadow(0 0 20px rgba(212, 168, 67, 0.4)); }
+
+.app-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 40px rgba(212, 168, 67, 0.2);
+  text-wrap: balance;
+}
+.app-subtitle { font-family: var(--font-mono); font-size: 1.05rem; color: var(--accent-light); margin-bottom: 2rem; }
+.verse-box { font-style: italic; opacity: 0.7; max-width: 340px; margin: 0 auto 2.5rem; line-height: 1.7; font-size: 0.95rem; }
+.verse-ref { font-size: 0.85em; opacity: 0.8; display: block; margin-top: 0.25rem; }
+
+.cta-stack { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%; max-width: 300px; margin: 0 auto; }
+
+.btn {
+  font-family: var(--font-display); font-size: 0.95rem; padding: 0.9rem 2rem;
+  border: none; border-radius: var(--radius-sm); cursor: pointer;
+  letter-spacing: 0.1em; width: 100%;
+  transition: transform 0.12s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: var(--navy); box-shadow: 0 4px 20px rgba(212, 168, 67, 0.3); }
+.btn-primary:hover { box-shadow: 0 6px 30px rgba(212, 168, 67, 0.5); }
+.btn-secondary { background: transparent; color: var(--accent-light); border: 2px solid var(--accent-dim); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: none; border: none; color: var(--text-dim); font-family: var(--font-body); font-size: 0.85rem; cursor: pointer; padding: 0.5rem; letter-spacing: 0; }
+
+/* Screen header */
+.screen-header { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 0.5rem; text-align: center; text-wrap: balance; }
+.screen-sub { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-dim); text-align: center; margin-bottom: 2rem; }
+
+/* Avatar Picker */
+.avatar-screen { padding-top: 3rem; }
+.avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; max-width: 320px; width: 100%; margin-bottom: 2rem; }
+.avatar-cell {
+  aspect-ratio: 1; border-radius: var(--radius); background: var(--surface);
+  border: 2px solid transparent; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  gap: 0.25rem; -webkit-tap-highlight-color: transparent;
+}
+.avatar-cell:hover { border-color: var(--accent-dim); background: var(--surface-raised); }
+.avatar-cell.selected { border-color: var(--accent); background: var(--surface-raised); box-shadow: 0 0 20px var(--gold-glow); }
+.avatar-cell .icon { font-size: 1.8rem; }
+.avatar-cell .label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.codename-input { width: 100%; max-width: 300px; margin-bottom: 1.5rem; }
+.codename-input label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-dim); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; }
+.codename-input input { width: 100%; background: var(--surface); border: 2px solid var(--accent-dim); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 1rem; color: var(--accent); letter-spacing: 0.1em; outline: none; }
+.codename-input input:focus { border-color: var(--accent); }
+.codename-input input::placeholder { color: var(--accent-dim); opacity: 0.6; }
+
+/* HQ Dashboard */
+.hq-screen { padding-top: 1rem; align-items: stretch; max-width: 420px; margin: 0 auto; width: 100%; }
+.hq-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; margin-bottom: 1rem; }
+.hq-agent-info { display: flex; align-items: center; gap: 0.75rem; }
+.hq-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--surface-raised); border: 2px solid var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.hq-name { font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.08em; }
+.hq-rank { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
+.hq-points { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-light); background: var(--surface); padding: 0.4rem 0.75rem; border-radius: 20px; border: 1px solid var(--accent-dim); }
+
+.briefing-card { background: var(--surface); border: 1px solid var(--accent-dim); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; position: relative; overflow: hidden; }
+.briefing-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent)); }
+.briefing-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; }
+.briefing-verse { font-size: 1rem; line-height: 1.7; margin-bottom: 0.5rem; }
+.briefing-ref { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); }
+.briefing-prompt { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 168, 67, 0.15); line-height: 1.5; }
+
+.section-label { font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+
+.mission-card {
+  background: var(--surface); border-radius: var(--radius); padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;
+  cursor: pointer; border: 1px solid transparent;
+  transition: border-color 0.15s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mission-card:hover { border-color: var(--accent-dim); }
+.mission-card:active { transform: scale(0.98); }
+.mission-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--surface-raised); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.mission-info { flex: 1; min-width: 0; }
+.mission-title { font-family: var(--font-display); font-size: 0.8rem; color: var(--text); letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+.mission-desc { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mission-xp { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); flex-shrink: 0; }
+
+/* Agent Badge Card */
+.agent-badge-card {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.agent-badge-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+
+.agent-badge-card[data-rank="trainee"] { border: 1px solid #555; }
+.agent-badge-card[data-rank="trainee"]::before { background: #555; }
+
+.agent-badge-card[data-rank="scout"] { border: 1px solid var(--bronze); }
+.agent-badge-card[data-rank="scout"]::before { background: linear-gradient(90deg, #8b5e20, var(--bronze), #8b5e20); }
+
+.agent-badge-card[data-rank="operative"] { border: 1px solid var(--silver); }
+.agent-badge-card[data-rank="operative"]::before { background: linear-gradient(90deg, #6b7a8d, var(--silver), #6b7a8d); }
+
+.agent-badge-card[data-rank="specialist"] { border: 1px solid var(--gold); animation: badgeGlow 3s ease-in-out infinite; }
+.agent-badge-card[data-rank="specialist"]::before { background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-light), var(--gold)); }
+
+.agent-badge-card[data-rank="double_0"] { border: 2px solid var(--gold); animation: badgeGlow 2s ease-in-out infinite; }
+.agent-badge-card[data-rank="double_0"]::before { background: linear-gradient(90deg, var(--gold), var(--gold-light), #fff, var(--gold-light), var(--gold)); background-size: 200% 100%; animation: shimmer 3s linear infinite; }
+
+.agent-badge-card[data-rank="commander"] { border: 2px solid var(--platinum); animation: badgeGlow 1.5s ease-in-out infinite; }
+.agent-badge-card[data-rank="commander"]::before { height: 5px; background: linear-gradient(90deg, var(--gold), var(--platinum), #fff, var(--platinum), var(--gold)); background-size: 200% 100%; animation: shimmer 2s linear infinite; }
+
+.badge-emblem {
+  width: 100px; height: 100px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.8rem;
+  position: relative;
+}
+
+.badge-emblem[data-rank="trainee"] { background: rgba(85,85,85,0.15); border: 3px solid #555; }
+.badge-emblem[data-rank="scout"] { background: rgba(205,127,50,0.1); border: 3px solid var(--bronze); }
+.badge-emblem[data-rank="operative"] { background: rgba(168,178,193,0.1); border: 3px solid var(--silver); }
+.badge-emblem[data-rank="specialist"] { background: rgba(212,168,67,0.1); border: 3px solid var(--gold); box-shadow: 0 0 20px rgba(212,168,67,0.2); }
+.badge-emblem[data-rank="double_0"] { background: rgba(212,168,67,0.15); border: 3px solid var(--gold-light); box-shadow: 0 0 30px rgba(212,168,67,0.3); }
+.badge-emblem[data-rank="commander"] { background: linear-gradient(135deg, rgba(212,168,67,0.15), rgba(229,228,226,0.15)); border: 3px solid var(--platinum); box-shadow: 0 0 40px rgba(229,228,226,0.25); }
+
+.badge-designation {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.15rem;
+}
+.badge-designation[data-rank="trainee"] { color: #888; }
+.badge-designation[data-rank="scout"] { color: var(--bronze); }
+.badge-designation[data-rank="operative"] { color: var(--silver); }
+.badge-designation[data-rank="specialist"] { color: var(--gold); }
+.badge-designation[data-rank="double_0"] { color: var(--gold-light); text-shadow: 0 0 20px rgba(212,168,67,0.4); }
+.badge-designation[data-rank="commander"] { color: var(--platinum); text-shadow: 0 0 20px rgba(229,228,226,0.4); }
+
+.badge-codename {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.badge-rank-name {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+}
+.badge-rank-name[data-rank="trainee"] { color: #888; }
+.badge-rank-name[data-rank="scout"] { color: var(--bronze); }
+.badge-rank-name[data-rank="operative"] { color: var(--silver); }
+.badge-rank-name[data-rank="specialist"] { color: var(--gold); }
+.badge-rank-name[data-rank="double_0"] { color: var(--gold-light); }
+.badge-rank-name[data-rank="commander"] { color: var(--platinum); }
+
+.badge-xp-bar { width: 100%; height: 8px; background: var(--surface-raised); border-radius: 4px; overflow: hidden; margin-top: 0.5rem; }
+.badge-xp-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.badge-xp-fill[data-rank="trainee"] { background: #555; }
+.badge-xp-fill[data-rank="scout"] { background: linear-gradient(90deg, #8b5e20, var(--bronze)); }
+.badge-xp-fill[data-rank="operative"] { background: linear-gradient(90deg, #6b7a8d, var(--silver)); }
+.badge-xp-fill[data-rank="specialist"] { background: linear-gradient(90deg, var(--gold-dim), var(--gold)); }
+.badge-xp-fill[data-rank="double_0"] { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.badge-xp-fill[data-rank="commander"] { background: linear-gradient(90deg, var(--gold), var(--platinum)); }
+
+.badge-xp-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 0.4rem; }
+
+/* Rank Progression Screen */
+.rank-screen { padding-top: 1.5rem; max-width: 420px; margin: 0 auto; width: 100%; align-items: stretch; }
+
+.rank-timeline { position: relative; padding-left: 2.5rem; }
+.rank-timeline::before {
+  content: '';
+  position: absolute;
+  left: 14px; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(to bottom, #555, var(--bronze), var(--silver), var(--gold), var(--gold-light), var(--platinum));
+}
+
+.rank-node {
+  position: relative;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.rank-node:active { transform: scale(0.98); }
+.rank-node::before {
+  content: '';
+  position: absolute;
+  left: -2.5rem;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: var(--bg);
+  z-index: 1;
+}
+.rank-node.achieved::before { background: var(--green); border-color: var(--green); }
+.rank-node.current { border-color: var(--accent); }
+.rank-node.current::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--gold-glow); }
+.rank-node.locked { opacity: 0.5; }
+.rank-node.locked::before { border-color: #444; }
+
+.rank-node[data-rank="trainee"]::before { border-color: #555; }
+.rank-node[data-rank="scout"]::before { border-color: var(--bronze); }
+.rank-node[data-rank="operative"]::before { border-color: var(--silver); }
+.rank-node[data-rank="specialist"]::before { border-color: var(--gold); }
+.rank-node[data-rank="double_0"]::before { border-color: var(--gold-light); }
+.rank-node[data-rank="commander"]::before { border-color: var(--platinum); }
+
+.rank-node-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; }
+.rank-node-name { font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.08em; }
+.rank-node-desig { font-family: var(--font-mono); font-size: 0.75rem; }
+.rank-node-xp { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
+.rank-node-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+/* Mission Detail */
+.mission-detail-screen { padding-top: 1.5rem; max-width: 420px; margin: 0 auto; width: 100%; align-items: stretch; }
+.back-btn { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; cursor: pointer; padding: 0.5rem 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; -webkit-tap-highlight-color: transparent; }
+.detail-hero { text-align: center; margin-bottom: 1.5rem; }
+.detail-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.detail-title { font-family: var(--font-display); font-size: 1.2rem; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+.detail-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+.detail-meta span { display: flex; align-items: center; gap: 0.3rem; }
+.objectives { background: var(--surface); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
+.objectives h3 { font-family: var(--font-display); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+.objective-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.9rem; line-height: 1.5; }
+.objective-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--accent-dim); flex-shrink: 0; margin-top: 0.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, border-color 0.15s; font-size: 0.7rem; -webkit-tap-highlight-color: transparent; }
+.objective-check.done { background: var(--green); border-color: var(--green); }
+
+/* Decoder */
+.decoder-screen { padding-top: 2rem; max-width: 420px; margin: 0 auto; width: 100%; align-items: stretch; }
+.decoder-display { background: var(--surface); border: 1px solid var(--accent-dim); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; font-family: var(--font-mono); text-align: center; position: relative; }
+.decoder-cipher { font-size: 1.3rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 1rem; word-break: break-all; line-height: 1.8; }
+.decoder-plain { font-size: 1.1rem; color: var(--accent-light); min-height: 1.5em; letter-spacing: 0.15em; }
+.decoder-hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.75rem; }
+.decoder-keys { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; margin-bottom: 1.5rem; }
+.decoder-key { aspect-ratio: 1; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--accent-dim); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); cursor: pointer; transition: background 0.1s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
+.decoder-key:active { transform: scale(0.92); background: var(--surface-raised); }
+.decoder-key.correct { background: var(--green); color: var(--navy); border-color: var(--green); }
+.decoder-key.wrong { background: var(--red); color: white; border-color: var(--red); }
+
+/* Parent screens */
+.login-screen { padding-top: 3rem; max-width: 360px; margin: 0 auto; width: 100%; }
+.form-group { margin-bottom: 1.25rem; width: 100%; }
+.form-group label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); text-transform: uppercase; letter-spacing: 0.12em; display: block; margin-bottom: 0.4rem; }
+.form-group input { width: 100%; background: var(--surface); border: 2px solid rgba(212, 168, 67, 0.2); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: var(--font-body); font-size: 0.95rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+.form-group input:focus { border-color: var(--accent); }
+.classified { font-family: var(--font-display); font-size: 0.65rem; color: var(--red); letter-spacing: 0.2em; border: 2px solid var(--red); padding: 0.2rem 0.6rem; border-radius: 4px; display: inline-block; transform: rotate(-3deg); opacity: 0.8; }
+
+/* Rank-up overlay */
+.rank-up-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(10, 22, 40, 0.95);
+  z-index: 300;
+  flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem;
+}
+.rank-up-overlay.visible { display: flex; }
+.rank-up-overlay .badge-emblem { animation: rankUp 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.rank-up-title {
+  font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s linear infinite;
+}
+.rank-up-sub { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-dim); margin-bottom: 2rem; }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface); border-top: 1px solid rgba(212, 168, 67, 0.2);
+  display: flex; justify-content: space-around;
+  padding: 0.5rem 0;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.4rem 0.75rem; cursor: pointer; border: none; background: none; color: var(--text-dim); transition: color 0.15s; -webkit-tap-highlight-color: transparent; }
+.nav-item.active { color: var(--accent); }
+.nav-item .nav-icon { font-size: 1.3rem; }
+.nav-item .nav-label { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.has-nav { padding-bottom: 5rem; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<!-- SCREEN: Landing -->
+<div id="screen-landing" class="screen active landing">
+  <div class="badge-glow"><span class="shield">🛡️</span></div>
+  <h1 class="app-title">KINGDOM AGENCY</h1>
+  <p class="app-subtitle">Your mission awaits, Agent.</p>
+  <div class="verse-box">
+    "The word of our God shall stand for ever."
+    <span class="verse-ref">— Isaiah 40:8</span>
+  </div>
+  <div class="cta-stack">
+    <button class="btn btn-primary" onclick="goTo('screen-avatar')">ACCEPT MISSION</button>
+    <button class="btn btn-secondary" onclick="goTo('screen-login')">PARENT LOGIN</button>
+  </div>
+</div>
+
+<!-- SCREEN: Parent Login -->
+<div id="screen-login" class="screen login-screen">
+  <div style="text-align:center; margin-bottom: 2rem;">
+    <span style="font-size: 2.5rem;">🔐</span>
+    <h2 class="screen-header" style="margin-top: 0.75rem;">COMMAND CENTER</h2>
+    <p class="screen-sub">Parent / Leader Access</p>
+  </div>
+  <div class="form-group"><label>Email</label><input type="email" placeholder="agent@kingdom.church"></div>
+  <div class="form-group"><label>Password</label><input type="password" placeholder="••••••••"></div>
+  <button class="btn btn-primary" style="width:100%; margin-bottom: 0.75rem;" onclick="goTo('screen-parent-dash')">LOGIN</button>
+  <button class="btn btn-secondary" style="width:100%; margin-bottom: 1rem;">REGISTER</button>
+  <button class="btn-ghost" onclick="goTo('screen-landing')">← Back to Home</button>
+</div>
+
+<!-- SCREEN: Parent Dashboard -->
+<div id="screen-parent-dash" class="screen" style="max-width: 420px; margin: 0 auto; width: 100%; align-items: stretch; padding-top: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div>
+      <div style="font-family: var(--font-display); font-size: 0.9rem; color: var(--accent); letter-spacing: 0.08em;">COMMAND CENTER</div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim);">Beacon Community Church</div>
+    </div>
+    <span class="classified">PARENT</span>
+  </div>
+  <div class="section-label" style="margin-top: 0.5rem;">YOUR AGENTS</div>
+  <div class="mission-card" style="border: 1px solid rgba(212, 168, 67, 0.15);">
+    <div class="mission-icon">🦁</div>
+    <div class="mission-info">
+      <div class="mission-title">Agent Lionheart</div>
+      <div class="mission-desc" style="color: var(--bronze);">Scout · Agent 1 · 340 XP</div>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--green);">●</div>
+  </div>
+  <div class="mission-card" style="border: 1px solid rgba(212, 168, 67, 0.15);">
+    <div class="mission-icon">⭐</div>
+    <div class="mission-info">
+      <div class="mission-title">Agent Starkeeper</div>
+      <div class="mission-desc" style="color: #888;">Trainee · Agent 0 · 85 XP</div>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--green);">●</div>
+  </div>
+  <button class="btn btn-secondary" style="margin-top: 0.75rem; font-size: 0.8rem; padding: 0.7rem;">+ ADD CHILD AGENT</button>
+  <div class="section-label" style="margin-top: 1.5rem;">QUICK ACTIONS</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">📊</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">PROGRESS</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">🔒</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">PRIVACY</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">📥</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">EXPORT DATA</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">⚙️</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">SETTINGS</span></div>
+  </div>
+  <button class="btn-ghost" onclick="goTo('screen-landing')">← Sign Out</button>
+</div>
+
+<!-- SCREEN: Avatar Picker -->
+<div id="screen-avatar" class="screen avatar-screen">
+  <h2 class="screen-header">CHOOSE YOUR EMBLEM</h2>
+  <p class="screen-sub">Every agent needs an identity</p>
+  <div class="avatar-grid" id="avatar-grid">
+    <div class="avatar-cell" data-avatar="shield" onclick="pickAvatar(this)"><span class="icon">🛡️</span><span class="label">Shield</span></div>
+    <div class="avatar-cell" data-avatar="sword" onclick="pickAvatar(this)"><span class="icon">⚔️</span><span class="label">Sword</span></div>
+    <div class="avatar-cell" data-avatar="scroll" onclick="pickAvatar(this)"><span class="icon">📜</span><span class="label">Scroll</span></div>
+    <div class="avatar-cell" data-avatar="dove" onclick="pickAvatar(this)"><span class="icon">🕊️</span><span class="label">Dove</span></div>
+    <div class="avatar-cell" data-avatar="lion" onclick="pickAvatar(this)"><span class="icon">🦁</span><span class="label">Lion</span></div>
+    <div class="avatar-cell" data-avatar="eagle" onclick="pickAvatar(this)"><span class="icon">🦅</span><span class="label">Eagle</span></div>
+    <div class="avatar-cell" data-avatar="flame" onclick="pickAvatar(this)"><span class="icon">🔥</span><span class="label">Flame</span></div>
+    <div class="avatar-cell" data-avatar="star" onclick="pickAvatar(this)"><span class="icon">⭐</span><span class="label">Star</span></div>
+  </div>
+  <div class="codename-input">
+    <label>Agent Codename</label>
+    <input type="text" id="codename" placeholder="SHADOW EAGLE" maxlength="20">
+  </div>
+  <button class="btn btn-primary" onclick="enterHQ()">BEGIN TRAINING</button>
+  <button class="btn-ghost" style="margin-top: 0.75rem;" onclick="goTo('screen-landing')">← Back</button>
+</div>
+
+<!-- SCREEN: HQ Dashboard -->
+<div id="screen-hq" class="screen hq-screen has-nav">
+  <div class="hq-topbar">
+    <div class="hq-agent-info">
+      <div class="hq-avatar" id="hq-avatar">🛡️</div>
+      <div>
+        <div class="hq-name" id="hq-name">AGENT SHADOW</div>
+        <div class="hq-rank" id="hq-rank-label">Agent 0 · Trainee</div>
+      </div>
+    </div>
+    <div class="hq-points" id="hq-xp">⭐ 0 XP</div>
+  </div>
+
+  <div class="briefing-card">
+    <div class="briefing-label">📡 Daily Briefing — Day 12</div>
+    <div class="briefing-verse">"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."</div>
+    <div class="briefing-ref">— Joshua 1:9</div>
+    <div class="briefing-prompt">💬 Think about a time you needed courage. How did God help you through it?</div>
+  </div>
+
+  <div class="section-label">ACTIVE MISSIONS</div>
+  <div class="mission-card" onclick="goTo('screen-mission')">
+    <div class="mission-icon">📖</div>
+    <div class="mission-info"><div class="mission-title">VERSE VAULT</div><div class="mission-desc">Memorize Joshua 1:9 by Friday</div></div>
+    <div class="mission-xp">+30 XP</div>
+  </div>
+  <div class="mission-card" onclick="goTo('screen-decoder')">
+    <div class="mission-icon">🔐</div>
+    <div class="mission-info"><div class="mission-title">DECODER</div><div class="mission-desc">Crack today's encrypted verse</div></div>
+    <div class="mission-xp">+20 XP</div>
+  </div>
+  <div class="mission-card" onclick="awardDemoXP(25)">
+    <div class="mission-icon">🎯</div>
+    <div class="mission-info"><div class="mission-title">FIELD OPS</div><div class="mission-desc">Do one kind thing for a neighbor</div></div>
+    <div class="mission-xp">+25 XP</div>
+  </div>
+
+  <div class="section-label" style="margin-top: 0.75rem;">AGENT BADGE</div>
+  <div class="agent-badge-card" id="hq-badge-card" data-rank="trainee" onclick="goTo('screen-ranks')">
+    <div class="badge-emblem" id="hq-badge-emblem" data-rank="trainee">🛡️</div>
+    <div class="badge-designation" id="hq-badge-desig" data-rank="trainee">AGENT 0</div>
+    <div class="badge-codename" id="hq-badge-codename">AGENT SHADOW</div>
+    <div class="badge-rank-name" id="hq-badge-rank" data-rank="trainee">TRAINEE</div>
+    <div style="font-size: 0.8rem; color: var(--text-dim);" id="hq-badge-progress">0 / 250 XP to Scout</div>
+    <div class="badge-xp-bar"><div class="badge-xp-fill" id="hq-badge-fill" data-rank="trainee" style="width: 0%;"></div></div>
+    <div class="badge-xp-label" style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-dim);">Tap to view all ranks →</div>
+  </div>
+</div>
+
+<!-- SCREEN: Rank Progression -->
+<div id="screen-ranks" class="screen rank-screen has-nav">
+  <button class="back-btn" onclick="goTo('screen-hq')">← HQ</button>
+  <h2 class="screen-header">AGENT RANKS</h2>
+  <p class="screen-sub">From 0 to 00 — prove your worth</p>
+
+  <div class="rank-timeline" id="rank-timeline"></div>
+
+  <div style="text-align: center; margin-top: 1rem;">
+    <button class="btn btn-secondary" style="max-width: 280px;" onclick="awardDemoXP(250)">SIMULATE +250 XP</button>
+    <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); margin-top: 0.5rem;">Demo: tap to see rank progression</div>
+  </div>
+</div>
+
+<!-- SCREEN: Mission Detail -->
+<div id="screen-mission" class="screen mission-detail-screen has-nav">
+  <button class="back-btn" onclick="goTo('screen-hq')">← HQ</button>
+  <div class="detail-hero">
+    <div class="detail-icon">📖</div>
+    <div class="detail-title">VERSE VAULT</div>
+    <div class="detail-meta">
+      <span>⏱ 3 days left</span>
+      <span>⭐ 30 XP</span>
+      <span class="classified">ACTIVE</span>
+    </div>
+  </div>
+  <div class="objectives">
+    <h3>OBJECTIVES</h3>
+    <div class="objective-item"><div class="objective-check done" onclick="toggleCheck(this)">✓</div><div>Read Joshua 1:9 three times</div></div>
+    <div class="objective-item"><div class="objective-check done" onclick="toggleCheck(this)">✓</div><div>Write the verse from memory</div></div>
+    <div class="objective-item"><div class="objective-check" onclick="toggleCheck(this)"></div><div>Record yourself saying the verse</div></div>
+    <div class="objective-item"><div class="objective-check" onclick="toggleCheck(this)"></div><div>Share what this verse means to you</div></div>
+  </div>
+  <button class="btn btn-primary" style="width: 100%;" onclick="awardDemoXP(30)">SUBMIT FOR REVIEW</button>
+</div>
+
+<!-- SCREEN: Decoder Game -->
+<div id="screen-decoder" class="screen decoder-screen has-nav">
+  <button class="back-btn" onclick="goTo('screen-hq')">← HQ</button>
+  <h2 class="screen-header">DECODER</h2>
+  <p class="screen-sub">Crack the cipher to reveal the verse</p>
+  <div class="decoder-display">
+    <div class="decoder-cipher" id="cipher-text">HPE JT NZ MJHIU</div>
+    <div class="decoder-plain" id="plain-text"></div>
+    <div class="decoder-hint">Caesar shift: each letter moved +1</div>
+  </div>
+  <div class="decoder-keys" id="decoder-keys"></div>
+  <button class="btn btn-secondary" onclick="resetDecoder()" style="width: 100%;">RESET</button>
+</div>
+
+<!-- Rank-up overlay -->
+<div class="rank-up-overlay" id="rank-up-overlay">
+  <div class="badge-emblem" id="rankup-emblem" data-rank="scout" style="width:120px;height:120px;font-size:3.5rem;margin-bottom:1.5rem;">🛡️</div>
+  <div class="rank-up-title" id="rankup-title">RANK UP!</div>
+  <div class="rank-up-sub" id="rankup-sub">You are now Agent 1 · Scout</div>
+  <button class="btn btn-primary" style="max-width:240px;" onclick="closeRankUp()">CONTINUE</button>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav" id="bottom-nav" style="display: none;">
+  <button class="nav-item active" onclick="goTo('screen-hq')"><span class="nav-icon">🏠</span><span class="nav-label">HQ</span></button>
+  <button class="nav-item" onclick="goTo('screen-mission')"><span class="nav-icon">🎯</span><span class="nav-label">Missions</span></button>
+  <button class="nav-item" onclick="goTo('screen-decoder')"><span class="nav-icon">🔐</span><span class="nav-label">Decoder</span></button>
+  <button class="nav-item" onclick="goTo('screen-ranks')"><span class="nav-icon">🏆</span><span class="nav-label">Rank</span></button>
+  <button class="nav-item" onclick="goTo('screen-landing')"><span class="nav-icon">🚪</span><span class="nav-label">Exit</span></button>
+</div>
+
+<script>
+const RANKS = [
+  { id: 'trainee', name: 'TRAINEE', desig: 'Agent 0', xp: 0, desc: 'Every agent starts here. Learn the basics.' },
+  { id: 'scout', name: 'SCOUT', desig: 'Agent 1', xp: 250, desc: 'First field assignment. You\'ve earned your number.' },
+  { id: 'operative', name: 'OPERATIVE', desig: 'Agent 7', xp: 750, desc: 'The number of completion. A proven agent.' },
+  { id: 'specialist', name: 'SPECIALIST', desig: 'Agent 07', xp: 1500, desc: 'Elite skills. Trusted with harder missions.' },
+  { id: 'double_0', name: 'DOUBLE-0', desig: 'Agent 00', xp: 3000, desc: 'Top clearance. The highest field rank.' },
+  { id: 'commander', name: 'COMMANDER', desig: 'Agent 001', xp: 6000, desc: 'Legend. You lead the Kingdom Agency.' },
+];
+
+let state = { xp: 0, avatar: '🛡️', codename: 'SHADOW' };
+
+function getRank(xp) {
+  let current = RANKS[0];
+  for (const r of RANKS) { if (xp >= r.xp) current = r; else break; }
+  return current;
+}
+function getNextRank(xp) {
+  for (const r of RANKS) { if (xp < r.xp) return r; }
+  return null;
+}
+
+const navScreens = ['screen-hq', 'screen-mission', 'screen-decoder', 'screen-ranks'];
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+  document.getElementById('bottom-nav').style.display = navScreens.includes(id) ? 'flex' : 'none';
+  window.scrollTo(0, 0);
+  document.querySelectorAll('.nav-item').forEach((btn, i) => {
+    btn.classList.toggle('active',
+      (i===0 && id==='screen-hq') || (i===1 && id==='screen-mission') ||
+      (i===2 && id==='screen-decoder') || (i===3 && id==='screen-ranks'));
+  });
+  if (id === 'screen-ranks') renderRankTimeline();
+}
+
+let selectedAvatar = null;
+function pickAvatar(el) {
+  document.querySelectorAll('.avatar-cell').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAvatar = el.querySelector('.icon').textContent;
+}
+
+function enterHQ() {
+  state.codename = (document.getElementById('codename').value.trim() || 'SHADOW').toUpperCase();
+  state.avatar = selectedAvatar || '🛡️';
+  updateHQ();
+  goTo('screen-hq');
+}
+
+function updateHQ() {
+  const rank = getRank(state.xp);
+  const next = getNextRank(state.xp);
+
+  document.getElementById('hq-avatar').textContent = state.avatar;
+  document.getElementById('hq-name').textContent = 'AGENT ' + state.codename;
+  document.getElementById('hq-rank-label').textContent = rank.desig + ' · ' + rank.name;
+  document.getElementById('hq-xp').textContent = '⭐ ' + state.xp + ' XP';
+
+  const card = document.getElementById('hq-badge-card');
+  const emblem = document.getElementById('hq-badge-emblem');
+  const desig = document.getElementById('hq-badge-desig');
+  const cname = document.getElementById('hq-badge-codename');
+  const rname = document.getElementById('hq-badge-rank');
+  const prog = document.getElementById('hq-badge-progress');
+  const fill = document.getElementById('hq-badge-fill');
+
+  [card, emblem, desig, rname, fill].forEach(el => el.setAttribute('data-rank', rank.id));
+  emblem.textContent = state.avatar;
+  desig.textContent = rank.desig.toUpperCase();
+  cname.textContent = 'AGENT ' + state.codename;
+  rname.textContent = rank.name;
+
+  if (next) {
+    const progress = ((state.xp - rank.xp) / (next.xp - rank.xp)) * 100;
+    prog.textContent = state.xp + ' / ' + next.xp + ' XP to ' + next.name;
+    fill.style.width = Math.min(progress, 100) + '%';
+  } else {
+    prog.textContent = state.xp + ' XP · MAX RANK';
+    fill.style.width = '100%';
+  }
+}
+
+function awardDemoXP(amount) {
+  const oldRank = getRank(state.xp);
+  state.xp += amount;
+  const newRank = getRank(state.xp);
+  updateHQ();
+
+  if (oldRank.id !== newRank.id) {
+    showRankUp(newRank);
+  }
+}
+
+function showRankUp(rank) {
+  const overlay = document.getElementById('rank-up-overlay');
+  const emblem = document.getElementById('rankup-emblem');
+  const sub = document.getElementById('rankup-sub');
+
+  emblem.setAttribute('data-rank', rank.id);
+  emblem.textContent = state.avatar;
+  sub.textContent = 'You are now ' + rank.desig + ' · ' + rank.name;
+  overlay.classList.add('visible');
+}
+
+function closeRankUp() {
+  document.getElementById('rank-up-overlay').classList.remove('visible');
+}
+
+function renderRankTimeline() {
+  const container = document.getElementById('rank-timeline');
+  const currentRank = getRank(state.xp);
+  let html = '';
+
+  RANKS.forEach((r, i) => {
+    const achieved = state.xp >= r.xp && currentRank.id !== r.id && RANKS.indexOf(currentRank) > i;
+    const isCurrent = currentRank.id === r.id;
+    const locked = state.xp < r.xp;
+    let cls = 'rank-node';
+    if (achieved) cls += ' achieved';
+    if (isCurrent) cls += ' current';
+    if (locked) cls += ' locked';
+
+    const nameColor = r.id === 'trainee' ? '#888' : r.id === 'scout' ? 'var(--bronze)' : r.id === 'operative' ? 'var(--silver)' : r.id === 'specialist' ? 'var(--gold)' : r.id === 'double_0' ? 'var(--gold-light)' : 'var(--platinum)';
+
+    html += '<div class="' + cls + '" data-rank="' + r.id + '">' +
+      '<div class="rank-node-header">' +
+        '<div class="rank-node-name" style="color:' + nameColor + '">' + r.name + '</div>' +
+        '<div class="rank-node-desig" style="color:' + nameColor + '">' + r.desig + '</div>' +
+      '</div>' +
+      '<div class="rank-node-xp">' + r.xp + ' XP required' + (isCurrent ? ' · CURRENT' : locked ? '' : ' · ✓') + '</div>' +
+      '<div class="rank-node-desc">' + r.desc + '</div>' +
+    '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function toggleCheck(el) {
+  if (el.classList.contains('done')) { el.classList.remove('done'); el.textContent = ''; }
+  else { el.classList.add('done'); el.textContent = '✓'; }
+}
+
+// Decoder
+const answer = 'GOD IS MY LIGHT';
+let decoded = '';
+let usedKeys = new Set();
+
+function initDecoder() {
+  const keys = document.getElementById('decoder-keys');
+  keys.innerHTML = '';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+    const key = document.createElement('div');
+    key.className = 'decoder-key';
+    key.textContent = letter;
+    key.onclick = () => pressKey(letter, key);
+    keys.appendChild(key);
+  });
+}
+function pressKey(letter, el) {
+  if (usedKeys.has(letter)) return;
+  usedKeys.add(letter);
+  const answerLetters = answer.replace(/\s/g, '').split('');
+  if (answerLetters.includes(letter)) {
+    el.classList.add('correct');
+    let nd = '';
+    for (let i = 0; i < answer.length; i++) {
+      if (answer[i] === ' ') { nd += ' '; continue; }
+      nd += (answer[i] === letter || decoded[i] !== '_') ? answer[i] : '_';
+    }
+    decoded = nd;
+    if (!decoded.includes('_')) awardDemoXP(20);
+  } else { el.classList.add('wrong'); }
+  document.getElementById('plain-text').textContent = decoded;
+}
+function resetDecoder() {
+  decoded = answer.split('').map(c => c === ' ' ? ' ' : '_').join('');
+  usedKeys.clear();
+  document.getElementById('plain-text').textContent = decoded;
+  document.querySelectorAll('.decoder-key').forEach(k => { k.className = 'decoder-key'; });
+}
+
+initDecoder();
+resetDecoder();
+updateHQ();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
