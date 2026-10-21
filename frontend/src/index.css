@@ -1,0 +1,58 @@
+:root {
+  --navy: #0a1628;
+  --navy-light: #132240;
+  --gold: #d4a843;
+  --gold-light: #f0d68a;
+  --white: #f5f5f5;
+  --font-display: 'Black Ops One', cursive;
+  --font-body: 'Nunito', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero {
+  text-align: center;
+  padding: 2rem;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  color: var(--gold-light);
+  margin-bottom: 2rem;
+}
+
+.verse {
+  font-style: italic;
+  opacity: 0.7;
+  max-width: 400px;
+  margin: 0 auto;
+}
