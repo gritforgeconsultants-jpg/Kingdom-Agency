@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.core.database import Base
-from app.models import AuditLog, Organization, User  # noqa: F401
+from app.models import AuditLog, ChildProfile, Consent, Organization, User  # noqa: F401
 
 config = context.config
 

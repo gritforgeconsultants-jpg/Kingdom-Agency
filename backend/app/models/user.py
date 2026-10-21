@@ -38,3 +38,4 @@ class User(Base):
     )
 
     organization: Mapped["Organization"] = relationship(back_populates="users")  # type: ignore[name-defined]  # noqa: F821
+    children: Mapped[list["ChildProfile"]] = relationship(back_populates="parent")  # type: ignore[name-defined]  # noqa: F821

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#0a1628"/>
+  <g transform="translate(256,256)">
+    <!-- Shield shape -->
+    <path d="M0-180 L140-120 L140,40 Q140,160 0,200 Q-140,160 -140,40 L-140,-120 Z"
+          fill="none" stroke="#d4a843" stroke-width="12"/>
+    <!-- Cross -->
+    <line x1="0" y1="-100" x2="0" y2="120" stroke="#d4a843" stroke-width="16" stroke-linecap="round"/>
+    <line x1="-70" y1="-20" x2="70" y2="-20" stroke="#d4a843" stroke-width="16" stroke-linecap="round"/>
+    <!-- Star -->
+    <polygon points="0,-150 12,-125 38,-125 18,-110 26,-85 0,-98 -26,-85 -18,-110 -38,-125 -12,-125"
+             fill="#d4a843"/>
+  </g>
+  <!-- K.A. text -->
+  <text x="256" y="470" text-anchor="middle" font-family="sans-serif" font-weight="bold"
+        font-size="48" fill="#d4a843" letter-spacing="8">K.A.</text>
+</svg>

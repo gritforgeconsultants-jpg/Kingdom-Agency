@@ -112,6 +112,15 @@ async def parent_user(db: AsyncSession, org_beacon: Organization) -> User:
 
 
 @pytest.fixture
+async def parent_with_pin(db: AsyncSession, org_beacon: Organization) -> User:
+    user = await create_test_user(db, org_beacon, UserRole.PARENT, "pinparent@test.com")
+    user.kid_mode_pin = "1234"
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@pytest.fixture
 async def admin_user(db: AsyncSession, org_beacon: Organization) -> User:
     return await create_test_user(db, org_beacon, UserRole.ADMIN, "admin@test.com")
 
