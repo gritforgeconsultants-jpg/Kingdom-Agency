@@ -127,6 +127,89 @@ class TestChildProfiles:
 
 
 @pytest.mark.asyncio
+class TestRankProgression:
+    async def test_new_child_is_trainee(self, client: AsyncClient, parent_with_pin: User):
+        headers = await get_auth_headers(client, "pinparent@test.com", "TestPass123!")
+        resp = await client.post(
+            "/api/v1/children/",
+            json={"codename": "Rank Rookie", "age_band": "9-11"},
+            headers=headers,
+        )
+        data = resp.json()
+        assert data["xp"] == 0
+        assert data["rank_info"]["rank"] == "trainee"
+        assert data["rank_info"]["designation"] == "Agent 0"
+
+    async def test_award_xp(self, client: AsyncClient, parent_with_pin: User):
+        headers = await get_auth_headers(client, "pinparent@test.com", "TestPass123!")
+        create = await client.post(
+            "/api/v1/children/",
+            json={"codename": "XP Agent", "age_band": "9-11"},
+            headers=headers,
+        )
+        child_id = create.json()["id"]
+
+        resp = await client.post(
+            f"/api/v1/children/{child_id}/xp",
+            json={"amount": 100},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["xp_awarded"] == 100
+        assert data["child"]["xp"] == 100
+        assert data["ranked_up"] is False
+
+    async def test_rank_up_to_scout(self, client: AsyncClient, parent_with_pin: User):
+        headers = await get_auth_headers(client, "pinparent@test.com", "TestPass123!")
+        create = await client.post(
+            "/api/v1/children/",
+            json={"codename": "Rank Up Agent", "age_band": "9-11"},
+            headers=headers,
+        )
+        child_id = create.json()["id"]
+
+        resp = await client.post(
+            f"/api/v1/children/{child_id}/xp",
+            json={"amount": 250},
+            headers=headers,
+        )
+        data = resp.json()
+        assert data["ranked_up"] is True
+        assert data["old_rank"] == "trainee"
+        assert data["new_rank"] == "scout"
+        assert data["child"]["rank_info"]["designation"] == "Agent 1"
+
+    async def test_rank_progression_full(self, client: AsyncClient, parent_with_pin: User):
+        headers = await get_auth_headers(client, "pinparent@test.com", "TestPass123!")
+        create = await client.post(
+            "/api/v1/children/",
+            json={"codename": "Max Agent", "age_band": "9-11"},
+            headers=headers,
+        )
+        child_id = create.json()["id"]
+
+        # Jump straight to Commander
+        resp = await client.post(
+            f"/api/v1/children/{child_id}/xp",
+            json={"amount": 500},
+            headers=headers,
+        )
+        # Multiple smaller awards to reach top
+        for _ in range(12):
+            resp = await client.post(
+                f"/api/v1/children/{child_id}/xp",
+                json={"amount": 500},
+                headers=headers,
+            )
+
+        data = resp.json()
+        assert data["child"]["rank_info"]["rank"] == "commander"
+        assert data["child"]["rank_info"]["designation"] == "Agent 001"
+        assert data["child"]["rank_info"]["xp_to_next_rank"] is None
+
+
+@pytest.mark.asyncio
 class TestKidMode:
     async def test_enter_kid_mode(self, client: AsyncClient, parent_with_pin: User):
         headers = await get_auth_headers(client, "pinparent@test.com", "TestPass123!")

@@ -18,8 +18,11 @@ from app.schemas.child import (
     KidModeSession,
     PinSet,
     PrivacyNotice,
+    XPAward,
+    XPAwardResponse,
 )
 from app.services.child_service import (
+    award_xp,
     create_child,
     create_kid_mode_token,
     delete_child_data,
@@ -56,7 +59,7 @@ async def create_child_profile(
     await grant_consent(
         db, parent=user, child=child, ip_address=request.client.host if request.client else None
     )
-    return ChildResponse.model_validate(child)
+    return ChildResponse.from_child(child)
 
 
 @router.get("/", response_model=list[ChildResponse])
@@ -65,7 +68,7 @@ async def list_my_children(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[ChildResponse]:
     children = await list_children(db, parent=user)
-    return [ChildResponse.model_validate(c) for c in children]
+    return [ChildResponse.from_child(c) for c in children]
 
 
 @router.get("/{child_id}", response_model=ChildResponse)
@@ -77,7 +80,7 @@ async def get_child_profile(
     child = await get_child(db, child_id, parent=user)
     if not child:
         raise HTTPException(status_code=404, detail="Child profile not found")
-    return ChildResponse.model_validate(child)
+    return ChildResponse.from_child(child)
 
 
 @router.patch("/{child_id}", response_model=ChildResponse)
@@ -93,7 +96,7 @@ async def update_child_profile(
     updated = await update_child(
         db, child, codename=body.codename, avatar=body.avatar, age_band=body.age_band
     )
-    return ChildResponse.model_validate(updated)
+    return ChildResponse.from_child(updated)
 
 
 @router.get("/{child_id}/export")
@@ -135,6 +138,26 @@ async def set_kid_mode_pin(
     await db.flush()
 
 
+@router.post("/{child_id}/xp", response_model=XPAwardResponse)
+async def award_child_xp(
+    child_id: uuid.UUID,
+    body: XPAward,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> XPAwardResponse:
+    child = await get_child(db, child_id, parent=user)
+    if not child:
+        raise HTTPException(status_code=404, detail="Child profile not found")
+    child, old_rank, new_rank = await award_xp(db, child, body.amount)
+    return XPAwardResponse(
+        child=ChildResponse.from_child(child),
+        xp_awarded=body.amount,
+        ranked_up=old_rank != new_rank,
+        old_rank=old_rank.value if old_rank != new_rank else None,
+        new_rank=new_rank.value if old_rank != new_rank else None,
+    )
+
+
 @router.post("/kid-mode/enter", response_model=KidModeSession)
 async def enter_kid_mode(
     body: KidModeEnter,
@@ -146,7 +169,7 @@ async def enter_kid_mode(
         raise HTTPException(status_code=404, detail="Child profile not found")
     token = create_kid_mode_token(user, child)
     return KidModeSession(
-        child=ChildResponse.model_validate(child), token=token, token_type="bearer"
+        child=ChildResponse.from_child(child), token=token, token_type="bearer"
     )
 
 

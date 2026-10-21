@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
-from app.models.child import AgeBand, AvatarChoice, ChildProfile
+from app.models.child import AgeBand, AgentRank, AvatarChoice, ChildProfile, rank_for_xp
 from app.models.consent import Consent
 from app.models.user import User
 
@@ -165,6 +165,19 @@ async def delete_child_data(
     )
     await db.delete(child)
     await db.flush()
+
+
+async def award_xp(
+    db: AsyncSession,
+    child: ChildProfile,
+    amount: int,
+) -> tuple[ChildProfile, AgentRank, AgentRank]:
+    """Award XP and return (child, old_rank, new_rank). Caller checks for rank-up."""
+    old_rank = rank_for_xp(child.xp)[0]
+    child.xp += amount
+    new_rank = rank_for_xp(child.xp)[0]
+    await db.flush()
+    return child, old_rank, new_rank
 
 
 def create_kid_mode_token(parent: User, child: ChildProfile) -> str:
