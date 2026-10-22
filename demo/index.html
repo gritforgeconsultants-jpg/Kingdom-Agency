@@ -23,6 +23,9 @@
   --gold-light: #f0d68a;
   --gold-dim: #8b7230;
   --gold-glow: rgba(212, 168, 67, 0.15);
+  --cyan: #00d4ff;
+  --cyan-dim: rgba(0, 212, 255, 0.15);
+  --cyan-glow: rgba(0, 212, 255, 0.3);
   --white: #f5f5f5;
   --white-dim: rgba(245, 245, 245, 0.6);
   --red: #c0392b;
@@ -58,9 +61,15 @@ body {
   padding-block: 0;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 * { box-sizing: border-box; }
+
+/* Particle canvas */
+#particle-canvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
 
 .screen {
   display: none;
@@ -68,12 +77,14 @@ body {
   flex-direction: column;
   align-items: center;
   padding-block: 2rem;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.4s ease;
+  position: relative;
+  z-index: 1;
 }
 .screen.active { display: flex; }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulse {
@@ -84,12 +95,12 @@ body {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes rankUp {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.15); }
-  50% { transform: scale(0.95); }
-  70% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+@keyframes rankUpBounce {
+  0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+  40% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  60% { transform: scale(0.9) rotate(-2deg); }
+  80% { transform: scale(1.05) rotate(1deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 @keyframes shimmer {
   0% { background-position: -200% center; }
@@ -99,18 +110,91 @@ body {
   0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.2); }
   50% { box-shadow: 0 0 40px rgba(212, 168, 67, 0.5); }
 }
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes scanLine {
+  0% { top: -2px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes glitch {
+  0%, 90%, 100% { transform: translate(0); opacity: 1; }
+  91% { transform: translate(-2px, 1px); opacity: 0.8; }
+  93% { transform: translate(2px, -1px); opacity: 0.9; }
+  95% { transform: translate(-1px, 2px); opacity: 0.7; }
+  97% { transform: translate(1px, -2px); opacity: 1; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes sonarPulse {
+  0% { transform: scale(0.5); opacity: 0.8; border-width: 3px; }
+  100% { transform: scale(3); opacity: 0; border-width: 1px; }
+}
+@keyframes flashBoom {
+  0% { opacity: 0; }
+  15% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+@keyframes holoShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes keyPulse {
+  0% { box-shadow: 0 0 0 0 var(--cyan-glow); }
+  50% { box-shadow: 0 0 12px 2px var(--cyan-glow); }
+  100% { box-shadow: 0 0 0 0 var(--cyan-glow); }
+}
+@keyframes matrixDrop {
+  0% { transform: translateY(-100%); opacity: 0.6; }
+  100% { transform: translateY(300%); opacity: 0; }
+}
+@keyframes hudPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* SVG icon containers */
+.svg-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; }
+.svg-icon svg { display: block; }
 
 /* Landing Screen */
 .landing { justify-content: center; text-align: center; }
 
-.badge-glow {
-  width: 120px; height: 120px; border-radius: 50%;
-  background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
-  display: flex; align-items: center; justify-content: center;
+.radar-container {
+  position: relative;
+  width: 160px; height: 160px;
   margin: 0 auto 1.5rem;
-  animation: pulse 3s ease-in-out infinite;
 }
-.badge-glow .shield { font-size: 4rem; filter: drop-shadow(0 0 20px rgba(212, 168, 67, 0.4)); }
+.radar-bg {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.05) 0%, transparent 70%);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+.radar-rings {
+  position: absolute; inset: 0; border-radius: 50%;
+}
+.radar-rings::before, .radar-rings::after {
+  content: ''; position: absolute; border-radius: 50%; border: 1px solid rgba(0, 212, 255, 0.08);
+}
+.radar-rings::before { inset: 25%; }
+.radar-rings::after { inset: 50%; }
+.radar-sweep {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(212, 168, 67, 0.3) 30deg, transparent 60deg);
+  animation: radarSweep 3s linear infinite;
+}
+.radar-center {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.radar-center .svg-icon { filter: drop-shadow(0 0 20px rgba(212, 168, 67, 0.5)); }
 
 .app-title {
   font-family: var(--font-display);
@@ -118,10 +202,17 @@ body {
   color: var(--accent);
   letter-spacing: 0.15em;
   margin-bottom: 0.5rem;
-  text-shadow: 0 0 40px rgba(212, 168, 67, 0.2);
+  text-shadow: 0 0 40px rgba(212, 168, 67, 0.3), 0 0 80px rgba(212, 168, 67, 0.1);
   text-wrap: balance;
+  animation: glitch 8s ease-in-out infinite;
 }
-.app-subtitle { font-family: var(--font-mono); font-size: 1.05rem; color: var(--accent-light); margin-bottom: 2rem; }
+.app-subtitle {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--cyan);
+  margin-bottom: 2rem;
+  min-height: 1.5em;
+}
 .verse-box { font-style: italic; opacity: 0.7; max-width: 340px; margin: 0 auto 2.5rem; line-height: 1.7; font-size: 0.95rem; }
 .verse-ref { font-size: 0.85em; opacity: 0.8; display: block; margin-top: 0.25rem; }
 
@@ -133,17 +224,38 @@ body {
   letter-spacing: 0.1em; width: 100%;
   transition: transform 0.12s, box-shadow 0.12s;
   -webkit-tap-highlight-color: transparent;
+  position: relative; overflow: hidden;
 }
+.btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.4s;
+}
+.btn:active::after { transform: translateX(100%); }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: var(--navy); box-shadow: 0 4px 20px rgba(212, 168, 67, 0.3); }
 .btn-primary:hover { box-shadow: 0 6px 30px rgba(212, 168, 67, 0.5); }
-.btn-secondary { background: transparent; color: var(--accent-light); border: 2px solid var(--accent-dim); }
-.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-secondary { background: transparent; color: var(--cyan); border: 1px solid rgba(0, 212, 255, 0.3); }
+.btn-secondary:hover { border-color: var(--cyan); }
 .btn-ghost { background: none; border: none; color: var(--text-dim); font-family: var(--font-body); font-size: 0.85rem; cursor: pointer; padding: 0.5rem; letter-spacing: 0; }
 
 /* Screen header */
 .screen-header { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 0.5rem; text-align: center; text-wrap: balance; }
 .screen-sub { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-dim); text-align: center; margin-bottom: 2rem; }
+
+/* Scan line effect on cards */
+.scan-card {
+  position: relative; overflow: hidden;
+}
+.scan-card::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  top: -2px; opacity: 0;
+  animation: scanLine 4s ease-in-out infinite;
+  animation-delay: var(--scan-delay, 0s);
+  pointer-events: none;
+}
 
 /* Avatar Picker */
 .avatar-screen { padding-top: 3rem; }
@@ -152,68 +264,89 @@ body {
   aspect-ratio: 1; border-radius: var(--radius); background: var(--surface);
   border: 2px solid transparent; display: flex; flex-direction: column;
   align-items: center; justify-content: center; cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s;
   gap: 0.25rem; -webkit-tap-highlight-color: transparent;
 }
 .avatar-cell:hover { border-color: var(--accent-dim); background: var(--surface-raised); }
-.avatar-cell.selected { border-color: var(--accent); background: var(--surface-raised); box-shadow: 0 0 20px var(--gold-glow); }
-.avatar-cell .icon { font-size: 1.8rem; }
+.avatar-cell.selected { border-color: var(--accent); background: var(--surface-raised); box-shadow: 0 0 20px var(--gold-glow), 0 0 40px rgba(212, 168, 67, 0.1); }
+.avatar-cell .icon { font-size: 1.8rem; color: var(--accent); }
 .avatar-cell .label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
 
 .codename-input { width: 100%; max-width: 300px; margin-bottom: 1.5rem; }
-.codename-input label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-dim); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; }
-.codename-input input { width: 100%; background: var(--surface); border: 2px solid var(--accent-dim); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 1rem; color: var(--accent); letter-spacing: 0.1em; outline: none; }
-.codename-input input:focus { border-color: var(--accent); }
+.codename-input label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; }
+.codename-input input { width: 100%; background: var(--surface); border: 2px solid rgba(0, 212, 255, 0.2); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: var(--font-display); font-size: 1rem; color: var(--accent); letter-spacing: 0.1em; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+.codename-input input:focus { border-color: var(--cyan); box-shadow: 0 0 15px var(--cyan-dim); }
 .codename-input input::placeholder { color: var(--accent-dim); opacity: 0.6; }
 
 /* HQ Dashboard */
 .hq-screen { padding-top: 1rem; align-items: stretch; max-width: 420px; margin: 0 auto; width: 100%; }
-.hq-topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; margin-bottom: 1rem; }
+
+/* HUD Topbar */
+.hq-topbar {
+  display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0.5rem; margin-bottom: 1rem;
+  border: 1px solid rgba(0, 212, 255, 0.1); border-radius: var(--radius);
+  background: rgba(19, 34, 64, 0.6);
+  position: relative;
+}
+.hq-topbar::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+.hq-topbar::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+}
+.hud-indicator {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+  position: absolute; top: 8px; right: 8px;
+  animation: hudPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 6px var(--cyan-glow);
+}
 .hq-agent-info { display: flex; align-items: center; gap: 0.75rem; }
-.hq-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--surface-raised); border: 2px solid var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.hq-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--surface-raised); border: 2px solid var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--accent); }
 .hq-name { font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.08em; }
 .hq-rank { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim); }
-.hq-points { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-light); background: var(--surface); padding: 0.4rem 0.75rem; border-radius: 20px; border: 1px solid var(--accent-dim); }
+.hq-points { font-family: var(--font-mono); font-size: 0.8rem; color: var(--cyan); background: rgba(0, 212, 255, 0.08); padding: 0.4rem 0.75rem; border-radius: 20px; border: 1px solid rgba(0, 212, 255, 0.2); }
 
 .briefing-card { background: var(--surface); border: 1px solid var(--accent-dim); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; position: relative; overflow: hidden; }
-.briefing-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent)); }
-.briefing-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; }
+.briefing-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent)); }
+.briefing-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
 .briefing-verse { font-size: 1rem; line-height: 1.7; margin-bottom: 0.5rem; }
 .briefing-ref { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); }
-.briefing-prompt { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 168, 67, 0.15); line-height: 1.5; }
+.briefing-prompt { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(0, 212, 255, 0.1); line-height: 1.5; }
 
-.section-label { font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+.section-label { font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--accent-dim), transparent); }
 
 .mission-card {
   background: var(--surface); border-radius: var(--radius); padding: 1rem 1.25rem;
   margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;
   cursor: pointer; border: 1px solid transparent;
-  transition: border-color 0.15s, transform 0.12s;
+  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
   -webkit-tap-highlight-color: transparent;
+  position: relative; overflow: hidden;
 }
-.mission-card:hover { border-color: var(--accent-dim); }
+.mission-card:hover { border-color: rgba(0, 212, 255, 0.2); box-shadow: 0 0 15px rgba(0, 212, 255, 0.05); }
 .mission-card:active { transform: scale(0.98); }
-.mission-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--surface-raised); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.mission-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--surface-raised); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; color: var(--accent); }
 .mission-info { flex: 1; min-width: 0; }
 .mission-title { font-family: var(--font-display); font-size: 0.8rem; color: var(--text); letter-spacing: 0.05em; margin-bottom: 0.2rem; }
 .mission-desc { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mission-xp { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); flex-shrink: 0; }
+.mission-xp { font-family: var(--font-mono); font-size: 0.75rem; color: var(--cyan); flex-shrink: 0; }
 
-/* Agent Badge Card */
+/* Agent Badge Card - Holographic */
 .agent-badge-card {
-  position: relative;
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 1.75rem 1.5rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  overflow: hidden;
+  position: relative; background: var(--surface); border-radius: var(--radius);
+  padding: 1.75rem 1.5rem; text-align: center; margin-bottom: 1rem; overflow: hidden;
 }
 .agent-badge-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+}
+.holo-overlay {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.08;
+  background: linear-gradient(135deg, transparent, var(--cyan), var(--gold), transparent, var(--cyan), transparent);
+  background-size: 300% 300%;
+  animation: holoShift 6s ease infinite;
 }
 
 .agent-badge-card[data-rank="trainee"] { border: 1px solid #555; }
@@ -221,26 +354,30 @@ body {
 
 .agent-badge-card[data-rank="scout"] { border: 1px solid var(--bronze); }
 .agent-badge-card[data-rank="scout"]::before { background: linear-gradient(90deg, #8b5e20, var(--bronze), #8b5e20); }
+.agent-badge-card[data-rank="scout"] .holo-overlay { opacity: 0.1; }
 
 .agent-badge-card[data-rank="operative"] { border: 1px solid var(--silver); }
 .agent-badge-card[data-rank="operative"]::before { background: linear-gradient(90deg, #6b7a8d, var(--silver), #6b7a8d); }
+.agent-badge-card[data-rank="operative"] .holo-overlay { opacity: 0.12; }
 
 .agent-badge-card[data-rank="specialist"] { border: 1px solid var(--gold); animation: badgeGlow 3s ease-in-out infinite; }
 .agent-badge-card[data-rank="specialist"]::before { background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-light), var(--gold)); }
+.agent-badge-card[data-rank="specialist"] .holo-overlay { opacity: 0.15; animation-duration: 4s; }
 
 .agent-badge-card[data-rank="double_0"] { border: 2px solid var(--gold); animation: badgeGlow 2s ease-in-out infinite; }
 .agent-badge-card[data-rank="double_0"]::before { background: linear-gradient(90deg, var(--gold), var(--gold-light), #fff, var(--gold-light), var(--gold)); background-size: 200% 100%; animation: shimmer 3s linear infinite; }
+.agent-badge-card[data-rank="double_0"] .holo-overlay { opacity: 0.2; animation-duration: 3s; }
 
 .agent-badge-card[data-rank="commander"] { border: 2px solid var(--platinum); animation: badgeGlow 1.5s ease-in-out infinite; }
 .agent-badge-card[data-rank="commander"]::before { height: 5px; background: linear-gradient(90deg, var(--gold), var(--platinum), #fff, var(--platinum), var(--gold)); background-size: 200% 100%; animation: shimmer 2s linear infinite; }
+.agent-badge-card[data-rank="commander"] .holo-overlay { opacity: 0.25; animation-duration: 2s; }
 
 .badge-emblem {
   width: 100px; height: 100px;
   margin: 0 auto 0.75rem;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 2.8rem;
-  position: relative;
+  position: relative; color: var(--accent);
 }
 
 .badge-emblem[data-rank="trainee"] { background: rgba(85,85,85,0.15); border: 3px solid #555; }
@@ -250,12 +387,7 @@ body {
 .badge-emblem[data-rank="double_0"] { background: rgba(212,168,67,0.15); border: 3px solid var(--gold-light); box-shadow: 0 0 30px rgba(212,168,67,0.3); }
 .badge-emblem[data-rank="commander"] { background: linear-gradient(135deg, rgba(212,168,67,0.15), rgba(229,228,226,0.15)); border: 3px solid var(--platinum); box-shadow: 0 0 40px rgba(229,228,226,0.25); }
 
-.badge-designation {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.15em;
-  margin-bottom: 0.15rem;
-}
+.badge-designation { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.15em; margin-bottom: 0.15rem; }
 .badge-designation[data-rank="trainee"] { color: #888; }
 .badge-designation[data-rank="scout"] { color: var(--bronze); }
 .badge-designation[data-rank="operative"] { color: var(--silver); }
@@ -263,21 +395,9 @@ body {
 .badge-designation[data-rank="double_0"] { color: var(--gold-light); text-shadow: 0 0 20px rgba(212,168,67,0.4); }
 .badge-designation[data-rank="commander"] { color: var(--platinum); text-shadow: 0 0 20px rgba(229,228,226,0.4); }
 
-.badge-codename {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
+.badge-codename { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem; }
 
-.badge-rank-name {
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.75rem;
-}
+.badge-rank-name { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
 .badge-rank-name[data-rank="trainee"] { color: #888; }
 .badge-rank-name[data-rank="scout"] { color: var(--bronze); }
 .badge-rank-name[data-rank="operative"] { color: var(--silver); }
@@ -301,35 +421,22 @@ body {
 
 .rank-timeline { position: relative; padding-left: 2.5rem; }
 .rank-timeline::before {
-  content: '';
-  position: absolute;
-  left: 14px; top: 0; bottom: 0; width: 2px;
+  content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px;
   background: linear-gradient(to bottom, #555, var(--bronze), var(--silver), var(--gold), var(--gold-light), var(--platinum));
 }
 
 .rank-node {
-  position: relative;
-  margin-bottom: 1.25rem;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border-radius: var(--radius);
-  border: 1px solid transparent;
-  cursor: pointer;
+  position: relative; margin-bottom: 1.25rem; padding: 1rem 1.25rem;
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid transparent; cursor: pointer;
   transition: border-color 0.15s, transform 0.12s;
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
 }
 .rank-node:active { transform: scale(0.98); }
 .rank-node::before {
-  content: '';
-  position: absolute;
-  left: -2.5rem;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  border: 3px solid;
-  background: var(--bg);
-  z-index: 1;
+  content: ''; position: absolute; left: -2.5rem; top: 50%; transform: translate(-50%, -50%);
+  width: 16px; height: 16px; border-radius: 50%; border: 3px solid; background: var(--bg); z-index: 1;
 }
 .rank-node.achieved::before { background: var(--green); border-color: var(--green); }
 .rank-node.current { border-color: var(--accent); }
@@ -352,56 +459,96 @@ body {
 
 /* Mission Detail */
 .mission-detail-screen { padding-top: 1.5rem; max-width: 420px; margin: 0 auto; width: 100%; align-items: stretch; }
-.back-btn { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 0.85rem; cursor: pointer; padding: 0.5rem 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; -webkit-tap-highlight-color: transparent; }
+.back-btn { background: none; border: none; color: var(--cyan); font-family: var(--font-mono); font-size: 0.85rem; cursor: pointer; padding: 0.5rem 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; -webkit-tap-highlight-color: transparent; }
 .detail-hero { text-align: center; margin-bottom: 1.5rem; }
-.detail-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.detail-icon { font-size: 3rem; margin-bottom: 0.75rem; color: var(--accent); }
 .detail-title { font-family: var(--font-display); font-size: 1.2rem; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 0.5rem; }
 .detail-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
 .detail-meta span { display: flex; align-items: center; gap: 0.3rem; }
-.objectives { background: var(--surface); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
+.objectives { background: var(--surface); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid rgba(0, 212, 255, 0.1); }
 .objectives h3 { font-family: var(--font-display); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 0.75rem; }
 .objective-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.9rem; line-height: 1.5; }
-.objective-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--accent-dim); flex-shrink: 0; margin-top: 0.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, border-color 0.15s; font-size: 0.7rem; -webkit-tap-highlight-color: transparent; }
-.objective-check.done { background: var(--green); border-color: var(--green); }
+.objective-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(0, 212, 255, 0.3); flex-shrink: 0; margin-top: 0.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s; font-size: 0.7rem; -webkit-tap-highlight-color: transparent; color: var(--navy); }
+.objective-check.done { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(39, 174, 96, 0.3); }
 
-/* Decoder */
+/* Decoder - Enhanced */
 .decoder-screen { padding-top: 2rem; max-width: 420px; margin: 0 auto; width: 100%; align-items: stretch; }
-.decoder-display { background: var(--surface); border: 1px solid var(--accent-dim); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; font-family: var(--font-mono); text-align: center; position: relative; }
+.decoder-display {
+  background: var(--surface); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: var(--radius);
+  padding: 1.5rem; margin-bottom: 0.75rem; font-family: var(--font-mono); text-align: center;
+  position: relative; overflow: hidden;
+}
+.decoder-display::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.015) 2px, rgba(0, 212, 255, 0.015) 4px);
+}
+.decoder-status {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--cyan); text-transform: uppercase;
+  letter-spacing: 0.2em; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+}
+.decoder-cursor { display: inline-block; width: 8px; height: 1em; background: var(--cyan); animation: blink 1s step-end infinite; vertical-align: middle; }
 .decoder-cipher { font-size: 1.3rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 1rem; word-break: break-all; line-height: 1.8; }
-.decoder-plain { font-size: 1.1rem; color: var(--accent-light); min-height: 1.5em; letter-spacing: 0.15em; }
+.decoder-plain { font-size: 1.1rem; color: var(--cyan); min-height: 1.5em; letter-spacing: 0.15em; }
 .decoder-hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.75rem; }
+.decoder-progress-bar {
+  width: 100%; height: 4px; background: var(--surface-raised); border-radius: 2px;
+  overflow: hidden; margin-bottom: 1.5rem;
+}
+.decoder-progress-fill {
+  height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--cyan), var(--accent));
+  transition: width 0.3s ease; width: 0%;
+}
 .decoder-keys { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; margin-bottom: 1.5rem; }
-.decoder-key { aspect-ratio: 1; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--accent-dim); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.85rem; color: var(--accent); cursor: pointer; transition: background 0.1s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
+.decoder-key {
+  aspect-ratio: 1; border-radius: var(--radius-sm); background: var(--surface);
+  border: 1px solid rgba(0, 212, 255, 0.15); display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.85rem; color: var(--cyan); cursor: pointer;
+  transition: background 0.1s, transform 0.1s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
 .decoder-key:active { transform: scale(0.92); background: var(--surface-raised); }
-.decoder-key.correct { background: var(--green); color: var(--navy); border-color: var(--green); }
+.decoder-key.correct { background: var(--green); color: var(--navy); border-color: var(--green); box-shadow: 0 0 10px rgba(39, 174, 96, 0.4); }
 .decoder-key.wrong { background: var(--red); color: white; border-color: var(--red); }
+.decoder-key.pressed { animation: keyPulse 0.4s ease; }
 
 /* Parent screens */
 .login-screen { padding-top: 3rem; max-width: 360px; margin: 0 auto; width: 100%; }
 .form-group { margin-bottom: 1.25rem; width: 100%; }
-.form-group label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); text-transform: uppercase; letter-spacing: 0.12em; display: block; margin-bottom: 0.4rem; }
-.form-group input { width: 100%; background: var(--surface); border: 2px solid rgba(212, 168, 67, 0.2); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: var(--font-body); font-size: 0.95rem; color: var(--text); outline: none; transition: border-color 0.15s; }
-.form-group input:focus { border-color: var(--accent); }
+.form-group label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.12em; display: block; margin-bottom: 0.4rem; }
+.form-group input { width: 100%; background: var(--surface); border: 2px solid rgba(0, 212, 255, 0.15); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: var(--font-body); font-size: 0.95rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+.form-group input:focus { border-color: var(--cyan); }
 .classified { font-family: var(--font-display); font-size: 0.65rem; color: var(--red); letter-spacing: 0.2em; border: 2px solid var(--red); padding: 0.2rem 0.6rem; border-radius: 4px; display: inline-block; transform: rotate(-3deg); opacity: 0.8; }
 
 /* Rank-up overlay */
 .rank-up-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(10, 22, 40, 0.95);
+  display: none; position: fixed; inset: 0;
+  background: rgba(10, 22, 40, 0.97);
   z-index: 300;
   flex-direction: column; align-items: center; justify-content: center;
   text-align: center; padding: 2rem;
 }
 .rank-up-overlay.visible { display: flex; }
-.rank-up-overlay .badge-emblem { animation: rankUp 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.rank-up-badge-wrap { position: relative; margin-bottom: 1.5rem; }
+.rank-up-overlay .badge-emblem { animation: rankUpBounce 0.8s cubic-bezier(0.16, 1, 0.3, 1); width: 120px; height: 120px; }
+.sonar-ring {
+  position: absolute; inset: -20px; border-radius: 50%;
+  border: 2px solid var(--gold); opacity: 0;
+}
+.sonar-ring.active { animation: sonarPulse 1.2s ease-out forwards; }
+.sonar-ring:nth-child(2).active { animation-delay: 0.2s; }
+.sonar-ring:nth-child(3).active { animation-delay: 0.4s; }
+.rank-up-flash {
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(212, 168, 67, 0.4), transparent 60%);
+  z-index: 299;
+  animation: flashBoom 0.8s ease-out forwards;
+}
 .rank-up-title {
   font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 0.15em;
   margin-bottom: 0.5rem;
-  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--cyan), var(--gold-light), var(--gold));
+  background-size: 300% 100%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer 2s linear infinite;
 }
@@ -409,30 +556,37 @@ body {
 
 /* Bottom Nav */
 .bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--surface); border-top: 1px solid rgba(212, 168, 67, 0.2);
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(19, 34, 64, 0.95); border-top: 1px solid rgba(0, 212, 255, 0.15);
   display: flex; justify-content: space-around;
   padding: 0.5rem 0;
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
-  z-index: 100;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 .nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.4rem 0.75rem; cursor: pointer; border: none; background: none; color: var(--text-dim); transition: color 0.15s; -webkit-tap-highlight-color: transparent; }
-.nav-item.active { color: var(--accent); }
+.nav-item.active { color: var(--cyan); }
 .nav-item .nav-icon { font-size: 1.3rem; }
 .nav-item .nav-label { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; }
 .has-nav { padding-bottom: 5rem; }
 
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
 <body>
 
+<canvas id="particle-canvas"></canvas>
+
 <!-- SCREEN: Landing -->
 <div id="screen-landing" class="screen active landing">
-  <div class="badge-glow"><span class="shield">🛡️</span></div>
+  <div class="radar-container">
+    <div class="radar-bg"></div>
+    <div class="radar-rings"></div>
+    <div class="radar-sweep"></div>
+    <div class="radar-center"><span class="svg-icon" id="landing-shield"></span></div>
+  </div>
   <h1 class="app-title">KINGDOM AGENCY</h1>
-  <p class="app-subtitle">Your mission awaits, Agent.</p>
+  <p class="app-subtitle" id="subtitle-decrypt"></p>
   <div class="verse-box">
     "The word of our God shall stand for ever."
     <span class="verse-ref">— Isaiah 40:8</span>
@@ -446,7 +600,7 @@ body {
 <!-- SCREEN: Parent Login -->
 <div id="screen-login" class="screen login-screen">
   <div style="text-align:center; margin-bottom: 2rem;">
-    <span style="font-size: 2.5rem;">🔐</span>
+    <span class="svg-icon" id="login-lock-icon"></span>
     <h2 class="screen-header" style="margin-top: 0.75rem;">COMMAND CENTER</h2>
     <p class="screen-sub">Parent / Leader Access</p>
   </div>
@@ -454,7 +608,7 @@ body {
   <div class="form-group"><label>Password</label><input type="password" placeholder="••••••••"></div>
   <button class="btn btn-primary" style="width:100%; margin-bottom: 0.75rem;" onclick="goTo('screen-parent-dash')">LOGIN</button>
   <button class="btn btn-secondary" style="width:100%; margin-bottom: 1rem;">REGISTER</button>
-  <button class="btn-ghost" onclick="goTo('screen-landing')">← Back to Home</button>
+  <button class="btn-ghost" onclick="goTo('screen-landing')">&#8592; Back to Home</button>
 </div>
 
 <!-- SCREEN: Parent Dashboard -->
@@ -467,112 +621,103 @@ body {
     <span class="classified">PARENT</span>
   </div>
   <div class="section-label" style="margin-top: 0.5rem;">YOUR AGENTS</div>
-  <div class="mission-card" style="border: 1px solid rgba(212, 168, 67, 0.15);">
-    <div class="mission-icon">🦁</div>
+  <div class="mission-card scan-card" style="border: 1px solid rgba(212, 168, 67, 0.15); --scan-delay: 0s;">
+    <div class="mission-icon" id="parent-lion-icon"></div>
     <div class="mission-info">
       <div class="mission-title">Agent Lionheart</div>
-      <div class="mission-desc" style="color: var(--bronze);">Scout · Agent 1 · 340 XP</div>
+      <div class="mission-desc" style="color: var(--bronze);">Scout &middot; Agent 1 &middot; 340 XP</div>
     </div>
-    <div style="font-size: 0.8rem; color: var(--green);">●</div>
+    <div style="font-size: 0.8rem; color: var(--green);">&#9679;</div>
   </div>
-  <div class="mission-card" style="border: 1px solid rgba(212, 168, 67, 0.15);">
-    <div class="mission-icon">⭐</div>
+  <div class="mission-card scan-card" style="border: 1px solid rgba(212, 168, 67, 0.15); --scan-delay: 1.5s;">
+    <div class="mission-icon" id="parent-star-icon"></div>
     <div class="mission-info">
       <div class="mission-title">Agent Starkeeper</div>
-      <div class="mission-desc" style="color: #888;">Trainee · Agent 0 · 85 XP</div>
+      <div class="mission-desc" style="color: #888;">Trainee &middot; Agent 0 &middot; 85 XP</div>
     </div>
-    <div style="font-size: 0.8rem; color: var(--green);">●</div>
+    <div style="font-size: 0.8rem; color: var(--green);">&#9679;</div>
   </div>
   <button class="btn btn-secondary" style="margin-top: 0.75rem; font-size: 0.8rem; padding: 0.7rem;">+ ADD CHILD AGENT</button>
   <div class="section-label" style="margin-top: 1.5rem;">QUICK ACTIONS</div>
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
-    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">📊</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">PROGRESS</span></div>
-    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">🔒</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">PRIVACY</span></div>
-    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">📥</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">EXPORT DATA</span></div>
-    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span style="font-size: 1.5rem;">⚙️</span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">SETTINGS</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span class="svg-icon" id="parent-chart"></span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">PROGRESS</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span class="svg-icon" id="parent-lock"></span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">PRIVACY</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span class="svg-icon" id="parent-download"></span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">EXPORT DATA</span></div>
+    <div class="mission-card" style="flex-direction: column; text-align: center; padding: 1rem; gap: 0.5rem;"><span class="svg-icon" id="parent-gear"></span><span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">SETTINGS</span></div>
   </div>
-  <button class="btn-ghost" onclick="goTo('screen-landing')">← Sign Out</button>
+  <button class="btn-ghost" onclick="goTo('screen-landing')">&#8592; Sign Out</button>
 </div>
 
 <!-- SCREEN: Avatar Picker -->
 <div id="screen-avatar" class="screen avatar-screen">
   <h2 class="screen-header">CHOOSE YOUR EMBLEM</h2>
   <p class="screen-sub">Every agent needs an identity</p>
-  <div class="avatar-grid" id="avatar-grid">
-    <div class="avatar-cell" data-avatar="shield" onclick="pickAvatar(this)"><span class="icon">🛡️</span><span class="label">Shield</span></div>
-    <div class="avatar-cell" data-avatar="sword" onclick="pickAvatar(this)"><span class="icon">⚔️</span><span class="label">Sword</span></div>
-    <div class="avatar-cell" data-avatar="scroll" onclick="pickAvatar(this)"><span class="icon">📜</span><span class="label">Scroll</span></div>
-    <div class="avatar-cell" data-avatar="dove" onclick="pickAvatar(this)"><span class="icon">🕊️</span><span class="label">Dove</span></div>
-    <div class="avatar-cell" data-avatar="lion" onclick="pickAvatar(this)"><span class="icon">🦁</span><span class="label">Lion</span></div>
-    <div class="avatar-cell" data-avatar="eagle" onclick="pickAvatar(this)"><span class="icon">🦅</span><span class="label">Eagle</span></div>
-    <div class="avatar-cell" data-avatar="flame" onclick="pickAvatar(this)"><span class="icon">🔥</span><span class="label">Flame</span></div>
-    <div class="avatar-cell" data-avatar="star" onclick="pickAvatar(this)"><span class="icon">⭐</span><span class="label">Star</span></div>
-  </div>
+  <div class="avatar-grid" id="avatar-grid"></div>
   <div class="codename-input">
     <label>Agent Codename</label>
     <input type="text" id="codename" placeholder="SHADOW EAGLE" maxlength="20">
   </div>
   <button class="btn btn-primary" onclick="enterHQ()">BEGIN TRAINING</button>
-  <button class="btn-ghost" style="margin-top: 0.75rem;" onclick="goTo('screen-landing')">← Back</button>
+  <button class="btn-ghost" style="margin-top: 0.75rem;" onclick="goTo('screen-landing')">&#8592; Back</button>
 </div>
 
 <!-- SCREEN: HQ Dashboard -->
 <div id="screen-hq" class="screen hq-screen has-nav">
   <div class="hq-topbar">
+    <div class="hud-indicator"></div>
     <div class="hq-agent-info">
-      <div class="hq-avatar" id="hq-avatar">🛡️</div>
+      <div class="hq-avatar" id="hq-avatar"></div>
       <div>
         <div class="hq-name" id="hq-name">AGENT SHADOW</div>
-        <div class="hq-rank" id="hq-rank-label">Agent 0 · Trainee</div>
+        <div class="hq-rank" id="hq-rank-label">Agent 0 &middot; Trainee</div>
       </div>
     </div>
-    <div class="hq-points" id="hq-xp">⭐ 0 XP</div>
+    <div class="hq-points" id="hq-xp">0 XP</div>
   </div>
 
-  <div class="briefing-card">
-    <div class="briefing-label">📡 Daily Briefing — Day 12</div>
+  <div class="briefing-card scan-card" style="--scan-delay: 0.5s;">
+    <div class="briefing-label"><span class="svg-icon" id="briefing-signal"></span> Daily Briefing — Day 12</div>
     <div class="briefing-verse">"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."</div>
     <div class="briefing-ref">— Joshua 1:9</div>
-    <div class="briefing-prompt">💬 Think about a time you needed courage. How did God help you through it?</div>
+    <div class="briefing-prompt">Think about a time you needed courage. How did God help you through it?</div>
   </div>
 
   <div class="section-label">ACTIVE MISSIONS</div>
-  <div class="mission-card" onclick="goTo('screen-mission')">
-    <div class="mission-icon">📖</div>
+  <div class="mission-card scan-card" style="--scan-delay: 1s;" onclick="goTo('screen-mission')">
+    <div class="mission-icon" id="mission-book-icon"></div>
     <div class="mission-info"><div class="mission-title">VERSE VAULT</div><div class="mission-desc">Memorize Joshua 1:9 by Friday</div></div>
     <div class="mission-xp">+30 XP</div>
   </div>
-  <div class="mission-card" onclick="goTo('screen-decoder')">
-    <div class="mission-icon">🔐</div>
+  <div class="mission-card scan-card" style="--scan-delay: 1.5s;" onclick="goTo('screen-decoder')">
+    <div class="mission-icon" id="mission-key-icon"></div>
     <div class="mission-info"><div class="mission-title">DECODER</div><div class="mission-desc">Crack today's encrypted verse</div></div>
     <div class="mission-xp">+20 XP</div>
   </div>
-  <div class="mission-card" onclick="awardDemoXP(25)">
-    <div class="mission-icon">🎯</div>
+  <div class="mission-card scan-card" style="--scan-delay: 2s;" onclick="awardDemoXP(25)">
+    <div class="mission-icon" id="mission-target-icon"></div>
     <div class="mission-info"><div class="mission-title">FIELD OPS</div><div class="mission-desc">Do one kind thing for a neighbor</div></div>
     <div class="mission-xp">+25 XP</div>
   </div>
 
   <div class="section-label" style="margin-top: 0.75rem;">AGENT BADGE</div>
   <div class="agent-badge-card" id="hq-badge-card" data-rank="trainee" onclick="goTo('screen-ranks')">
-    <div class="badge-emblem" id="hq-badge-emblem" data-rank="trainee">🛡️</div>
+    <div class="holo-overlay"></div>
+    <div class="badge-emblem" id="hq-badge-emblem" data-rank="trainee"></div>
     <div class="badge-designation" id="hq-badge-desig" data-rank="trainee">AGENT 0</div>
     <div class="badge-codename" id="hq-badge-codename">AGENT SHADOW</div>
     <div class="badge-rank-name" id="hq-badge-rank" data-rank="trainee">TRAINEE</div>
     <div style="font-size: 0.8rem; color: var(--text-dim);" id="hq-badge-progress">0 / 250 XP to Scout</div>
     <div class="badge-xp-bar"><div class="badge-xp-fill" id="hq-badge-fill" data-rank="trainee" style="width: 0%;"></div></div>
-    <div class="badge-xp-label" style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-dim);">Tap to view all ranks →</div>
+    <div class="badge-xp-label" style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-dim);">Tap to view all ranks &#8594;</div>
   </div>
 </div>
 
 <!-- SCREEN: Rank Progression -->
 <div id="screen-ranks" class="screen rank-screen has-nav">
-  <button class="back-btn" onclick="goTo('screen-hq')">← HQ</button>
+  <button class="back-btn" onclick="goTo('screen-hq')">&#8592; HQ</button>
   <h2 class="screen-header">AGENT RANKS</h2>
   <p class="screen-sub">From 0 to 00 — prove your worth</p>
-
   <div class="rank-timeline" id="rank-timeline"></div>
-
   <div style="text-align: center; margin-top: 1rem;">
     <button class="btn btn-secondary" style="max-width: 280px;" onclick="awardDemoXP(250)">SIMULATE +250 XP</button>
     <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); margin-top: 0.5rem;">Demo: tap to see rank progression</div>
@@ -581,20 +726,20 @@ body {
 
 <!-- SCREEN: Mission Detail -->
 <div id="screen-mission" class="screen mission-detail-screen has-nav">
-  <button class="back-btn" onclick="goTo('screen-hq')">← HQ</button>
+  <button class="back-btn" onclick="goTo('screen-hq')">&#8592; HQ</button>
   <div class="detail-hero">
-    <div class="detail-icon">📖</div>
+    <div class="detail-icon" id="detail-book-icon"></div>
     <div class="detail-title">VERSE VAULT</div>
     <div class="detail-meta">
-      <span>⏱ 3 days left</span>
-      <span>⭐ 30 XP</span>
+      <span>&#9201; 3 days left</span>
+      <span style="color: var(--cyan);">30 XP</span>
       <span class="classified">ACTIVE</span>
     </div>
   </div>
-  <div class="objectives">
+  <div class="objectives scan-card" style="--scan-delay: 0.8s;">
     <h3>OBJECTIVES</h3>
-    <div class="objective-item"><div class="objective-check done" onclick="toggleCheck(this)">✓</div><div>Read Joshua 1:9 three times</div></div>
-    <div class="objective-item"><div class="objective-check done" onclick="toggleCheck(this)">✓</div><div>Write the verse from memory</div></div>
+    <div class="objective-item"><div class="objective-check done" onclick="toggleCheck(this)">&#10003;</div><div>Read Joshua 1:9 three times</div></div>
+    <div class="objective-item"><div class="objective-check done" onclick="toggleCheck(this)">&#10003;</div><div>Write the verse from memory</div></div>
     <div class="objective-item"><div class="objective-check" onclick="toggleCheck(this)"></div><div>Record yourself saying the verse</div></div>
     <div class="objective-item"><div class="objective-check" onclick="toggleCheck(this)"></div><div>Share what this verse means to you</div></div>
   </div>
@@ -603,36 +748,85 @@ body {
 
 <!-- SCREEN: Decoder Game -->
 <div id="screen-decoder" class="screen decoder-screen has-nav">
-  <button class="back-btn" onclick="goTo('screen-hq')">← HQ</button>
+  <button class="back-btn" onclick="goTo('screen-hq')">&#8592; HQ</button>
   <h2 class="screen-header">DECODER</h2>
   <p class="screen-sub">Crack the cipher to reveal the verse</p>
   <div class="decoder-display">
+    <div class="decoder-status">DECRYPTING<span class="decoder-cursor"></span></div>
     <div class="decoder-cipher" id="cipher-text">HPE JT NZ MJHIU</div>
     <div class="decoder-plain" id="plain-text"></div>
     <div class="decoder-hint">Caesar shift: each letter moved +1</div>
   </div>
+  <div class="decoder-progress-bar"><div class="decoder-progress-fill" id="decoder-progress"></div></div>
   <div class="decoder-keys" id="decoder-keys"></div>
   <button class="btn btn-secondary" onclick="resetDecoder()" style="width: 100%;">RESET</button>
 </div>
 
 <!-- Rank-up overlay -->
 <div class="rank-up-overlay" id="rank-up-overlay">
-  <div class="badge-emblem" id="rankup-emblem" data-rank="scout" style="width:120px;height:120px;font-size:3.5rem;margin-bottom:1.5rem;">🛡️</div>
+  <div class="rank-up-badge-wrap">
+    <div class="sonar-ring" id="sonar1"></div>
+    <div class="sonar-ring" id="sonar2"></div>
+    <div class="sonar-ring" id="sonar3"></div>
+    <div class="badge-emblem" id="rankup-emblem" data-rank="scout" style="width:120px;height:120px;margin:0;"></div>
+  </div>
   <div class="rank-up-title" id="rankup-title">RANK UP!</div>
-  <div class="rank-up-sub" id="rankup-sub">You are now Agent 1 · Scout</div>
+  <div class="rank-up-sub" id="rankup-sub">You are now Agent 1 &middot; Scout</div>
   <button class="btn btn-primary" style="max-width:240px;" onclick="closeRankUp()">CONTINUE</button>
 </div>
+<div class="rank-up-flash" id="rank-up-flash" style="display:none;"></div>
 
 <!-- Bottom Nav -->
 <div class="bottom-nav" id="bottom-nav" style="display: none;">
-  <button class="nav-item active" onclick="goTo('screen-hq')"><span class="nav-icon">🏠</span><span class="nav-label">HQ</span></button>
-  <button class="nav-item" onclick="goTo('screen-mission')"><span class="nav-icon">🎯</span><span class="nav-label">Missions</span></button>
-  <button class="nav-item" onclick="goTo('screen-decoder')"><span class="nav-icon">🔐</span><span class="nav-label">Decoder</span></button>
-  <button class="nav-item" onclick="goTo('screen-ranks')"><span class="nav-icon">🏆</span><span class="nav-label">Rank</span></button>
-  <button class="nav-item" onclick="goTo('screen-landing')"><span class="nav-icon">🚪</span><span class="nav-label">Exit</span></button>
+  <button class="nav-item active" onclick="goTo('screen-hq')"><span class="nav-icon" id="nav-hq"></span><span class="nav-label">HQ</span></button>
+  <button class="nav-item" onclick="goTo('screen-mission')"><span class="nav-icon" id="nav-missions"></span><span class="nav-label">Missions</span></button>
+  <button class="nav-item" onclick="goTo('screen-decoder')"><span class="nav-icon" id="nav-decoder"></span><span class="nav-label">Decoder</span></button>
+  <button class="nav-item" onclick="goTo('screen-ranks')"><span class="nav-icon" id="nav-rank"></span><span class="nav-label">Rank</span></button>
+  <button class="nav-item" onclick="goTo('screen-landing')"><span class="nav-icon" id="nav-exit"></span><span class="nav-label">Exit</span></button>
 </div>
 
 <script>
+// ─── SVG ICON LIBRARY ───
+const SVG = {
+  shield: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 6v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6L12 2z" stroke="${c}" stroke-width="1.5" fill="none"/><line x1="12" y1="7" x2="12" y2="17" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="12" x2="16" y2="12" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  sword: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="5" y1="19" x2="17" y2="7" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="19" x2="19" y2="7" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><path d="M17 7l2-3 1 1-3 2z" fill="${c}"/><path d="M19 7l2-3-1-1-3 2z" fill="${c}"/><line x1="5" y1="17" x2="7" y2="19" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  scroll: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H7z" stroke="${c}" stroke-width="1.5"/><path d="M5 5c0-1.1.9-2 2-2" stroke="${c}" stroke-width="1.5"/><path d="M17 19c0 1.1.9 2 2 2s2-.9 2-2V7c0-1.1-.9-2-2-2h-2" stroke="${c}" stroke-width="1.5"/><line x1="9" y1="8" x2="13" y2="8" stroke="${c}" stroke-width="1" stroke-linecap="round"/><line x1="9" y1="11" x2="14" y2="11" stroke="${c}" stroke-width="1" stroke-linecap="round"/><line x1="9" y1="14" x2="12" y2="14" stroke="${c}" stroke-width="1" stroke-linecap="round"/></svg>`,
+  dove: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3c-2 0-4 2-4 4 0 1 .5 2 1 3l-5 4 2 1 3-2c1 2 3 3 5 3s3.5-1 4.5-2.5C19.5 12 20 10.5 20 9c0-3-3-6-8-6z" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 10l-3 1 4 2" stroke="${c}" stroke-width="1" stroke-linecap="round"/></svg>`,
+  lion: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="5" stroke="${c}" stroke-width="1.5"/><path d="M12 7c-1-2-3-3-4-3s-1 1 0 2c.7.7 2 1.5 4 1M12 7c1-2 3-3 4-3s1 1 0 2c-.7.7-2 1.5-4 1" stroke="${c}" stroke-width="1.2"/><path d="M7 12c-2-1-3-3-3-4s1-1 2 0c.7.7 1.5 2 1 4M17 12c2-1 3-3 3-4s-1-1-2 0c-.7.7-1.5 2-1 4" stroke="${c}" stroke-width="1.2"/><path d="M9 17c-1 2-1 3 0 3.5s2-.5 3-2M15 17c1 2 1 3 0 3.5s-2-.5-3-2" stroke="${c}" stroke-width="1.2"/><circle cx="10.5" cy="11" r="0.8" fill="${c}"/><circle cx="13.5" cy="11" r="0.8" fill="${c}"/><path d="M11 13.5l1 .5 1-.5" stroke="${c}" stroke-width="0.8" stroke-linecap="round"/></svg>`,
+  eagle: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4l-8 8c0 0 3 1 5 0l-2 4c0 0 3 0 5-2 2 2 5 2 5 2l-2-4c2 1 5 0 5 0L12 4z" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 4v6" stroke="${c}" stroke-width="1" stroke-linecap="round"/><circle cx="12" cy="8" r="1.5" stroke="${c}" stroke-width="1"/></svg>`,
+  flame: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2c0 4-5 6-5 10a5 5 0 0010 0c0-4-5-6-5-10z" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 22c-1.5 0-2.5-1-2.5-2.5S12 16 12 16s2.5 1.5 2.5 3.5S13.5 22 12 22z" stroke="${c}" stroke-width="1"/></svg>`,
+  star: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/></svg>`,
+  crosshair: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" stroke="${c}" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke="${c}" stroke-width="1"/><line x1="12" y1="2" x2="12" y2="6" stroke="${c}" stroke-width="1.5"/><line x1="12" y1="18" x2="12" y2="22" stroke="${c}" stroke-width="1.5"/><line x1="2" y1="12" x2="6" y2="12" stroke="${c}" stroke-width="1.5"/><line x1="18" y1="12" x2="22" y2="12" stroke="${c}" stroke-width="1.5"/></svg>`,
+  compass: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="${c}" stroke-width="1.5"/><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" stroke="${c}" stroke-width="1.2" fill="none"/><circle cx="12" cy="12" r="1" fill="${c}"/></svg>`,
+  key: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="15" r="4" stroke="${c}" stroke-width="1.5"/><line x1="11" y1="12" x2="20" y2="3" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="3" x2="20" y2="6" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><line x1="15" y1="5" x2="17" y2="7" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  chevrons: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="6,9 12,4 18,9" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="6,15 12,10 18,15" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="6,21 12,16 18,21" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  door: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 21V3h10v18" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 3l4 2v16l-4-2" stroke="${c}" stroke-width="1.5"/><circle cx="13" cy="12" r="1" fill="${c}"/><line x1="17" y1="12" x2="21" y2="12" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><polyline points="19,10 21,12 19,14" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  book: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 19V5c0-1.1.9-2 2-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2z" stroke="${c}" stroke-width="1.5"/><line x1="4" y1="17" x2="20" y2="17" stroke="${c}" stroke-width="1.5"/><line x1="12" y1="3" x2="12" y2="17" stroke="${c}" stroke-width="1"/><line x1="8" y1="7" x2="10" y2="7" stroke="${c}" stroke-width="1" stroke-linecap="round"/><line x1="14" y1="7" x2="16" y2="7" stroke="${c}" stroke-width="1" stroke-linecap="round"/></svg>`,
+  target: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="${c}" stroke-width="1.5"/><circle cx="12" cy="12" r="5" stroke="${c}" stroke-width="1.2"/><circle cx="12" cy="12" r="1.5" fill="${c}"/></svg>`,
+  lock: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="11" width="14" height="10" rx="2" stroke="${c}" stroke-width="1.5"/><path d="M8 11V7a4 4 0 018 0v4" stroke="${c}" stroke-width="1.5"/><circle cx="12" cy="16" r="1.5" fill="${c}"/></svg>`,
+  chartBar: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="14" width="4" height="7" rx="1" stroke="${c}" stroke-width="1.5"/><rect x="10" y="8" width="4" height="13" rx="1" stroke="${c}" stroke-width="1.5"/><rect x="16" y="3" width="4" height="18" rx="1" stroke="${c}" stroke-width="1.5"/></svg>`,
+  download: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="12" y1="3" x2="12" y2="15" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><polyline points="8,12 12,16 16,12" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  gear: (s=24, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="${c}" stroke-width="1.5"/><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  signal: (s=18, c='currentColor') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="2" fill="${c}"/><path d="M8.46 8.46a5 5 0 000 7.08M15.54 8.46a5 5 0 010 7.08" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64a9 9 0 000 12.73M18.36 5.64a9 9 0 010 12.73" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+};
+
+function icon(el, name, size, color) {
+  if (el && SVG[name]) el.innerHTML = SVG[name](size, color);
+}
+
+// ─── AVATAR DATA ───
+const AVATARS = [
+  { id: 'shield', name: 'Shield', icon: 'shield' },
+  { id: 'sword', name: 'Sword', icon: 'sword' },
+  { id: 'scroll', name: 'Scroll', icon: 'scroll' },
+  { id: 'dove', name: 'Dove', icon: 'dove' },
+  { id: 'lion', name: 'Lion', icon: 'lion' },
+  { id: 'eagle', name: 'Eagle', icon: 'eagle' },
+  { id: 'flame', name: 'Flame', icon: 'flame' },
+  { id: 'star', name: 'Star', icon: 'star' },
+];
+
+// ─── RANKS ───
 const RANKS = [
   { id: 'trainee', name: 'TRAINEE', desig: 'Agent 0', xp: 0, desc: 'Every agent starts here. Learn the basics.' },
   { id: 'scout', name: 'SCOUT', desig: 'Agent 1', xp: 250, desc: 'First field assignment. You\'ve earned your number.' },
@@ -642,7 +836,7 @@ const RANKS = [
   { id: 'commander', name: 'COMMANDER', desig: 'Agent 001', xp: 6000, desc: 'Legend. You lead the Kingdom Agency.' },
 ];
 
-let state = { xp: 0, avatar: '🛡️', codename: 'SHADOW' };
+let state = { xp: 0, avatarId: 'shield', codename: 'SHADOW' };
 
 function getRank(xp) {
   let current = RANKS[0];
@@ -654,7 +848,98 @@ function getNextRank(xp) {
   return null;
 }
 
+// ─── PARTICLE SYSTEM ───
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let particleBoost = false;
+const PARTICLE_COUNT = 55;
+const CONNECTION_DIST = 120;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function createParticle() {
+  const isGold = Math.random() > 0.4;
+  return {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
+    r: Math.random() * 2 + 1,
+    color: isGold ? 'rgba(212, 168, 67, 0.6)' : 'rgba(0, 212, 255, 0.4)',
+    lineColor: isGold ? 'rgba(212, 168, 67,' : 'rgba(0, 212, 255,',
+  };
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(createParticle());
+
+function animateParticles() {
+  if (document.hidden) { requestAnimationFrame(animateParticles); return; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const speed = particleBoost ? 3 : 1;
+  const alpha = particleBoost ? 0.15 : 0.06;
+
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    p.x += p.vx * speed;
+    p.y += p.vy * speed;
+    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+
+    for (let j = i + 1; j < particles.length; j++) {
+      const q = particles[j];
+      const dx = p.x - q.x;
+      const dy = p.y - q.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < CONNECTION_DIST) {
+        const a = (1 - dist / CONNECTION_DIST) * alpha;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+        ctx.strokeStyle = p.lineColor + a + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+requestAnimationFrame(animateParticles);
+
+// ─── DECRYPT TEXT EFFECT ───
+function decryptText(el, finalText, duration) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+  const steps = 20;
+  const interval = duration / steps;
+  let step = 0;
+  el.textContent = '';
+  const timer = setInterval(() => {
+    step++;
+    let text = '';
+    for (let i = 0; i < finalText.length; i++) {
+      if (finalText[i] === ' ') { text += ' '; continue; }
+      const reveal = (i / finalText.length) < (step / steps);
+      text += reveal ? finalText[i] : chars[Math.floor(Math.random() * chars.length)];
+    }
+    el.textContent = text;
+    if (step >= steps) { clearInterval(timer); el.textContent = finalText; }
+  }, interval);
+}
+
+// ─── NAVIGATION ───
 const navScreens = ['screen-hq', 'screen-mission', 'screen-decoder', 'screen-ranks'];
+const navMap = { 'screen-hq': 0, 'screen-mission': 1, 'screen-decoder': 2, 'screen-ranks': 3 };
 
 function goTo(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -662,36 +947,64 @@ function goTo(id) {
   if (target) target.classList.add('active');
   document.getElementById('bottom-nav').style.display = navScreens.includes(id) ? 'flex' : 'none';
   window.scrollTo(0, 0);
-  document.querySelectorAll('.nav-item').forEach((btn, i) => {
-    btn.classList.toggle('active',
-      (i===0 && id==='screen-hq') || (i===1 && id==='screen-mission') ||
-      (i===2 && id==='screen-decoder') || (i===3 && id==='screen-ranks'));
+  document.querySelectorAll('#bottom-nav .nav-item').forEach((btn, i) => {
+    btn.classList.toggle('active', navMap[id] === i);
   });
   if (id === 'screen-ranks') renderRankTimeline();
+  if (id === 'screen-landing') {
+    decryptText(document.getElementById('subtitle-decrypt'), 'Your mission awaits, Agent.', 1200);
+  }
 }
 
-let selectedAvatar = null;
-function pickAvatar(el) {
+// ─── AVATAR PICKER ───
+let selectedAvatarId = null;
+
+function buildAvatarGrid() {
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = '';
+  AVATARS.forEach(a => {
+    const cell = document.createElement('div');
+    cell.className = 'avatar-cell';
+    cell.setAttribute('data-avatar', a.id);
+    cell.onclick = () => pickAvatar(cell, a.id);
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'icon svg-icon';
+    iconWrap.innerHTML = SVG[a.icon](28, '#d4a843');
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = a.name;
+    cell.appendChild(iconWrap);
+    cell.appendChild(label);
+    grid.appendChild(cell);
+  });
+}
+
+function pickAvatar(el, id) {
   document.querySelectorAll('.avatar-cell').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  selectedAvatar = el.querySelector('.icon').textContent;
+  selectedAvatarId = id;
+}
+
+function getAvatarSVG(avatarId, size, color) {
+  return SVG[avatarId] ? SVG[avatarId](size, color) : SVG.shield(size, color);
 }
 
 function enterHQ() {
   state.codename = (document.getElementById('codename').value.trim() || 'SHADOW').toUpperCase();
-  state.avatar = selectedAvatar || '🛡️';
+  state.avatarId = selectedAvatarId || 'shield';
   updateHQ();
   goTo('screen-hq');
 }
 
+// ─── HQ ───
 function updateHQ() {
   const rank = getRank(state.xp);
   const next = getNextRank(state.xp);
 
-  document.getElementById('hq-avatar').textContent = state.avatar;
+  document.getElementById('hq-avatar').innerHTML = getAvatarSVG(state.avatarId, 24, '#d4a843');
   document.getElementById('hq-name').textContent = 'AGENT ' + state.codename;
   document.getElementById('hq-rank-label').textContent = rank.desig + ' · ' + rank.name;
-  document.getElementById('hq-xp').textContent = '⭐ ' + state.xp + ' XP';
+  document.getElementById('hq-xp').textContent = state.xp + ' XP';
 
   const card = document.getElementById('hq-badge-card');
   const emblem = document.getElementById('hq-badge-emblem');
@@ -702,7 +1015,7 @@ function updateHQ() {
   const fill = document.getElementById('hq-badge-fill');
 
   [card, emblem, desig, rname, fill].forEach(el => el.setAttribute('data-rank', rank.id));
-  emblem.textContent = state.avatar;
+  emblem.innerHTML = getAvatarSVG(state.avatarId, 48, '#d4a843');
   desig.textContent = rank.desig.toUpperCase();
   cname.textContent = 'AGENT ' + state.codename;
   rname.textContent = rank.name;
@@ -722,20 +1035,36 @@ function awardDemoXP(amount) {
   state.xp += amount;
   const newRank = getRank(state.xp);
   updateHQ();
-
-  if (oldRank.id !== newRank.id) {
-    showRankUp(newRank);
-  }
+  if (oldRank.id !== newRank.id) showRankUp(newRank);
 }
 
+// ─── RANK UP ───
 function showRankUp(rank) {
   const overlay = document.getElementById('rank-up-overlay');
   const emblem = document.getElementById('rankup-emblem');
   const sub = document.getElementById('rankup-sub');
 
   emblem.setAttribute('data-rank', rank.id);
-  emblem.textContent = state.avatar;
+  emblem.innerHTML = getAvatarSVG(state.avatarId, 56, '#d4a843');
   sub.textContent = 'You are now ' + rank.desig + ' · ' + rank.name;
+
+  // Sonar rings
+  ['sonar1','sonar2','sonar3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active');
+    void el.offsetWidth;
+    el.classList.add('active');
+  });
+
+  // Flash
+  const flash = document.getElementById('rank-up-flash');
+  flash.style.display = 'block';
+  setTimeout(() => flash.style.display = 'none', 800);
+
+  // Particle boost
+  particleBoost = true;
+  setTimeout(() => particleBoost = false, 2000);
+
   overlay.classList.add('visible');
 }
 
@@ -743,6 +1072,7 @@ function closeRankUp() {
   document.getElementById('rank-up-overlay').classList.remove('visible');
 }
 
+// ─── RANK TIMELINE ───
 function renderRankTimeline() {
   const container = document.getElementById('rank-timeline');
   const currentRank = getRank(state.xp);
@@ -757,7 +1087,8 @@ function renderRankTimeline() {
     if (isCurrent) cls += ' current';
     if (locked) cls += ' locked';
 
-    const nameColor = r.id === 'trainee' ? '#888' : r.id === 'scout' ? 'var(--bronze)' : r.id === 'operative' ? 'var(--silver)' : r.id === 'specialist' ? 'var(--gold)' : r.id === 'double_0' ? 'var(--gold-light)' : 'var(--platinum)';
+    const colors = { trainee: '#888', scout: 'var(--bronze)', operative: 'var(--silver)', specialist: 'var(--gold)', double_0: 'var(--gold-light)', commander: 'var(--platinum)' };
+    const nameColor = colors[r.id] || '#888';
 
     html += '<div class="' + cls + '" data-rank="' + r.id + '">' +
       '<div class="rank-node-header">' +
@@ -776,7 +1107,7 @@ function toggleCheck(el) {
   else { el.classList.add('done'); el.textContent = '✓'; }
 }
 
-// Decoder
+// ─── DECODER ───
 const answer = 'GOD IS MY LIGHT';
 let decoded = '';
 let usedKeys = new Set();
@@ -785,16 +1116,27 @@ function initDecoder() {
   const keys = document.getElementById('decoder-keys');
   keys.innerHTML = '';
   'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
-    const key = document.createElement('div');
-    key.className = 'decoder-key';
-    key.textContent = letter;
-    key.onclick = () => pressKey(letter, key);
-    keys.appendChild(key);
+    const k = document.createElement('div');
+    k.className = 'decoder-key';
+    k.textContent = letter;
+    k.onclick = () => pressKey(letter, k);
+    keys.appendChild(k);
   });
 }
+
+function updateDecoderProgress() {
+  const total = answer.replace(/\s/g, '').length;
+  const revealed = decoded.split('').filter((c, i) => answer[i] !== ' ' && c !== '_').length;
+  const pct = (revealed / total) * 100;
+  document.getElementById('decoder-progress').style.width = pct + '%';
+}
+
 function pressKey(letter, el) {
   if (usedKeys.has(letter)) return;
   usedKeys.add(letter);
+  el.classList.add('pressed');
+  setTimeout(() => el.classList.remove('pressed'), 400);
+
   const answerLetters = answer.replace(/\s/g, '').split('');
   if (answerLetters.includes(letter)) {
     el.classList.add('correct');
@@ -805,19 +1147,56 @@ function pressKey(letter, el) {
     }
     decoded = nd;
     if (!decoded.includes('_')) awardDemoXP(20);
-  } else { el.classList.add('wrong'); }
+  } else {
+    el.classList.add('wrong');
+  }
   document.getElementById('plain-text').textContent = decoded;
+  updateDecoderProgress();
 }
+
 function resetDecoder() {
   decoded = answer.split('').map(c => c === ' ' ? ' ' : '_').join('');
   usedKeys.clear();
   document.getElementById('plain-text').textContent = decoded;
+  document.getElementById('decoder-progress').style.width = '0%';
   document.querySelectorAll('.decoder-key').forEach(k => { k.className = 'decoder-key'; });
 }
 
+// ─── INIT ───
+function initIcons() {
+  // Landing
+  icon(document.getElementById('landing-shield'), 'shield', 64, '#d4a843');
+  // Login
+  icon(document.getElementById('login-lock-icon'), 'lock', 48, '#d4a843');
+  // Parent dashboard
+  icon(document.getElementById('parent-lion-icon'), 'lion', 28, '#d4a843');
+  icon(document.getElementById('parent-star-icon'), 'star', 28, '#d4a843');
+  icon(document.getElementById('parent-chart'), 'chartBar', 28, '#d4a843');
+  icon(document.getElementById('parent-lock'), 'lock', 28, '#d4a843');
+  icon(document.getElementById('parent-download'), 'download', 28, '#d4a843');
+  icon(document.getElementById('parent-gear'), 'gear', 28, '#d4a843');
+  // Briefing
+  icon(document.getElementById('briefing-signal'), 'signal', 16, '#00d4ff');
+  // Missions
+  icon(document.getElementById('mission-book-icon'), 'book', 26, '#d4a843');
+  icon(document.getElementById('mission-key-icon'), 'key', 26, '#d4a843');
+  icon(document.getElementById('mission-target-icon'), 'target', 26, '#d4a843');
+  // Mission detail
+  icon(document.getElementById('detail-book-icon'), 'book', 48, '#d4a843');
+  // Nav
+  icon(document.getElementById('nav-hq'), 'crosshair', 22, 'currentColor');
+  icon(document.getElementById('nav-missions'), 'compass', 22, 'currentColor');
+  icon(document.getElementById('nav-decoder'), 'key', 22, 'currentColor');
+  icon(document.getElementById('nav-rank'), 'chevrons', 22, 'currentColor');
+  icon(document.getElementById('nav-exit'), 'door', 22, 'currentColor');
+}
+
+buildAvatarGrid();
+initIcons();
 initDecoder();
 resetDecoder();
 updateHQ();
+decryptText(document.getElementById('subtitle-decrypt'), 'Your mission awaits, Agent.', 1200);
 </script>
 <script>
 if ('serviceWorker' in navigator) {

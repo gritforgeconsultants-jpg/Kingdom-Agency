@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kingdom-agency-v1';
+const CACHE_NAME = 'kingdom-agency-v2';
 const ASSETS = [
   './',
   './index.html',
